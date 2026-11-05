@@ -27,8 +27,6 @@ e o Moonraker só se aplicam ao `install.sh`.
 
 ## Funcionalidades em falta
 
-- **Wi-Fi:** não há configuração de rede. Mostra o IP em Definições > Sistema; para
-  mudar de rede usa-se o KlipperScreen.
 - **Reentrar numa calibração manual:** se o ecrã reiniciar a meio, a janela da macro
   perde-se e só resta Cancelar.
 - **Tamanho das seringas:** as contas de volume usam o `filament_diameter` do T0 (15 mm).

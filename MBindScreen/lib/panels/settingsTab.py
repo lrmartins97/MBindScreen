@@ -6,6 +6,7 @@ import logging
 
 from lib import screenSwitch
 from lib.panels.widgets.dialogs import confirm
+from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
 from lib.utils.widgets import (
     ListRow,
@@ -255,10 +256,14 @@ class SettingsTab(QtWidgets.QStackedWidget):
         root.setContentsMargins(14, 12, 14, 12)
         root.setSpacing(8)
         root.addWidget(label("Definições", "pageTitle"))
+        area, column = scroll_column(8)
+        root.addWidget(area, 1)
         self.addWidget(self.main)
         self.messages = MessagesPage(printer, self.reset)
+        self.wifi = WifiPage(api, self.reset)
         pages = (
             ("bell", "Mensagens", "Avisos e consola do Klipper.", self.messages),
+            ("wifi", "Wi-Fi", "Rede atual e mudar de rede.", self.wifi),
             ("info", "Sistema", "Versões e endereço de rede.", SystemPage(api, self.reset)),
             ("update", "Atualizações", "Estado do que o Moonraker atualiza.",
              UpdatesPage(printer, api, self.reset)),
@@ -271,8 +276,8 @@ class SettingsTab(QtWidgets.QStackedWidget):
             self.addWidget(page)
             row = ListRow(icon_name, title, description)
             row.clicked.connect(lambda p=page: self.setCurrentWidget(p))
-            root.addWidget(row)
-        root.addStretch()
+            column.addWidget(row)
+        column.addStretch()
 
     def reset(self) -> None:
         self.setCurrentWidget(self.main)

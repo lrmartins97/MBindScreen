@@ -22,6 +22,10 @@ PATHS = {
     "arrow_right": '<path d="M4 12h16M14 6l6 6-6 6"/>',
     "arrow_up": '<path d="M12 20V4M6 10l6-6 6 6"/>',
     "arrow_down": '<path d="M12 4v16M6 14l6 6 6-6"/>',
+    "wifi": (
+        '<path d="M2 9a15 15 0 0120 0M5.5 12.5a10 10 0 0113 0M9 16a5 5 0 016 0"/>'
+        '<path d="M12 19.5h.01"/>'
+    ),
     "calibrate": (
         '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'
         '<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'

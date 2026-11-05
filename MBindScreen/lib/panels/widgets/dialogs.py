@@ -80,6 +80,85 @@ def choose(
     return scrim
 
 
+KEY_LAYERS = (
+    ("1234567890", "qwertyuiop", "asdfghjkl-", "zxcvbnm_.@"),
+    ("1234567890", "!#$%^&*()+", "=[]{}|\\/~`", ";:'\",?<>€£"),
+)
+KEYBOARD_WIDTH = 780
+SHIFT = "⇧"
+SYMBOLS = "#+="
+LETTERS = "abc"
+
+
+def keyboard(
+    anchor: QtWidgets.QWidget,
+    title: str,
+    on_ok: typing.Callable[[str], None],
+    minimum: int = 1,
+) -> Scrim:
+    """Text entry. Shows what is typed: a wrong character is what fails most."""
+    scrim = Scrim(anchor, KEYBOARD_WIDTH)
+    scrim.content.setContentsMargins(10, 8, 10, 8)
+    scrim.content.setSpacing(6)
+    scrim.content.addWidget(label(title, "value"))
+    display = label("", "display")
+    scrim.content.addWidget(display)
+    state = {"text": "", "layer": 0, "upper": False}
+    keys: list[QtWidgets.QPushButton] = []
+
+    def show() -> None:
+        display.setText(state["text"] or " ")
+        ok.setEnabled(len(state["text"]) >= minimum)
+        layer = "".join(KEY_LAYERS[state["layer"]])
+        for key, char in zip(keys, layer):
+            key.setText(char.upper() if state["upper"] else char)
+        change.setText(LETTERS if state["layer"] else SYMBOLS)
+
+    def press(key: QtWidgets.QPushButton) -> None:
+        state["text"] += key.text()
+        show()
+
+    def erase() -> None:
+        state["text"] = state["text"][:-1]
+        show()
+
+    def toggle(name: str, values: tuple = (False, True)) -> None:
+        state[name] = values[1] if state[name] == values[0] else values[0]
+        show()
+
+    def accept() -> None:
+        scrim.close_box()
+        on_ok(state["text"])
+
+    grid = QtWidgets.QGridLayout()
+    grid.setSpacing(4)
+    for row, chars in enumerate(KEY_LAYERS[0]):
+        for col in range(len(chars)):
+            key = QtWidgets.QPushButton()
+            key.setMinimumHeight(46)
+            key.clicked.connect(lambda _=False, k=key: press(k))
+            grid.addWidget(key, row, col)
+            keys.append(key)
+    scrim.content.addLayout(grid)
+    bottom = QtWidgets.QHBoxLayout()
+    bottom.setSpacing(4)
+    change = button(SYMBOLS, lambda: toggle("layer", (0, 1)), height=48)
+    bottom.addWidget(button(SHIFT, lambda: toggle("upper"), height=48))
+    bottom.addWidget(change)
+    space = QtWidgets.QPushButton("espaço")
+    space.setMinimumHeight(48)
+    space.clicked.connect(lambda _=False: (state.update(text=state["text"] + " "), show()))
+    bottom.addWidget(space, 1)
+    bottom.addWidget(button("⌫", erase, height=48))
+    bottom.addWidget(button("Voltar", scrim.close_box, height=48))
+    ok = button("Ligar", accept, "accent", 48)
+    bottom.addWidget(ok)
+    scrim.content.addLayout(bottom)
+    show()
+    scrim.open()
+    return scrim
+
+
 def numpad(
     anchor: QtWidgets.QWidget,
     title: str,

@@ -12,7 +12,10 @@ from lib.moonrakerComm import (
     is_own_update_done,
 )
 from lib.panels.mainWindow import CONTROL, HOME, SETTINGS, SYRINGES, MainWindow
+from lib.panels.widgets.dialogs import Scrim
 from lib.utils.theme import QSS
+from lib.utils.widgets import HOLD_MS
+from PyQt6 import QtCore
 
 
 def test_starts_connected_on_home(window):
@@ -41,7 +44,7 @@ def test_material_choice_is_saved(window, api, qtbot):
 
 def test_temperature_keypad_refuses_above_the_machine_limit(window, api):
     window.goto(SYRINGES)
-    window.syringes.panels[0].temp_area.clicked.emit()
+    window.syringes.panels[0].held.emit()
     pad = top_dialog(window)
     click_button(pad, "9")
     click_button(pad, "5")
@@ -292,3 +295,19 @@ def test_every_page_fits_the_screen(qtbot, qapp, api, read_only):
     win = MainWindow(ScreenConfig(), api, read_only)
     qtbot.addWidget(win)
     assert win.minimumSizeHint().height() <= 480
+
+
+def test_a_touch_on_a_syringe_selects_it_and_only_holding_sets_the_temperature(
+    window, api, qtbot
+):
+    window.goto(SYRINGES)
+    panel = window.syringes.panels[1]
+    qtbot.mouseClick(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
+    assert api.sent[-1] == "T1"
+    assert not any(s.isVisible() for s in window.findChildren(Scrim))
+    sent = len(api.sent)
+    qtbot.mousePress(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
+    qtbot.wait(HOLD_MS + 100)
+    assert top_dialog(window).isVisible()
+    qtbot.mouseRelease(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
+    assert len(api.sent) == sent  # the end of a hold selects nothing

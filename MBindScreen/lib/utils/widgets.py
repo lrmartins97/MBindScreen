@@ -11,6 +11,9 @@ CENTER = QtCore.Qt.AlignmentFlag.AlignCenter
 Slot = typing.Callable[[], None]
 
 
+HOLD_MS = 600
+
+
 class Clickable(QtWidgets.QFrame):
     """A frame that behaves like a button."""
 
@@ -24,6 +27,34 @@ class Clickable(QtWidgets.QFrame):
         if self.isEnabled() and self.rect().contains(event.position().toPoint()):
             self.clicked.emit()
         super().mouseReleaseEvent(event)
+
+
+class HoldArea(Clickable):
+    """A short touch is ``clicked``; keeping the finger down is ``held``, and only that."""
+
+    held = QtCore.pyqtSignal(name="held")
+
+    def __init__(self, object_name: str = "card") -> None:
+        super().__init__(object_name)
+        self._was_held = False
+        self._timer = QtCore.QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(HOLD_MS)
+        self._timer.timeout.connect(self._on_hold)
+
+    def _on_hold(self) -> None:
+        self._was_held = True
+        self.held.emit()
+
+    def mousePressEvent(self, event) -> None:
+        self._was_held = False
+        self._timer.start()
+        event.accept()
+
+    def mouseReleaseEvent(self, event) -> None:
+        self._timer.stop()
+        if not self._was_held:
+            super().mouseReleaseEvent(event)
 
 
 def label(text: str = "", name: str = "") -> QtWidgets.QLabel:

@@ -103,6 +103,8 @@ Se algum pacote novo tiver passado a ser usado por outro programa, não é remov
 desinstalador mostra o comando para o fazer à mão. Também fica o que estiver no git do
 `m-bind-config`, que se muda nesse repositório.
 
+As redes Wi-Fi guardadas ficam, porque são da máquina e não do ecrã.
+
 Só restam registos do sistema: o histórico do apt e do dpkg e o journal. Um pacote
 acrescentado ao `system-dependencies.json` e instalado pelo Update Manager não fica
 registado, e tem de se remover à mão.

@@ -7,7 +7,7 @@ from lib import machine
 from lib.panels.widgets.dialogs import choose, confirm, numpad
 from lib.utils.widgets import (
     ChoiceRow,
-    Clickable,
+    HoldArea,
     button,
     card,
     label,
@@ -20,11 +20,14 @@ DISTANCES = (0.1, 0.5, 1, 5)  # mm of plunger travel
 SPEEDS = (0.1, 0.2, 0.5, 1)  # mm/s of plunger travel
 
 
-class SyringePanel(QtWidgets.QFrame):
+class SyringePanel(HoldArea):
+    """A touch on the card selects this head; holding it sets the temperature."""
+
     def __init__(self, tool: int, tab: "SyringeTab") -> None:
-        super().__init__()
-        self.setObjectName("card")
+        super().__init__("card")
         self.tool_index, self.tab = tool, tab
+        self.clicked.connect(self._select)
+        self.held.connect(self._edit_temperature)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(14, 10, 14, 12)
         layout.setSpacing(8)
@@ -35,8 +38,8 @@ class SyringePanel(QtWidgets.QFrame):
         top.addWidget(self.chip)
         layout.addLayout(top)
 
-        self.temp_area = Clickable("cell")
-        self.temp_area.clicked.connect(self._edit_temperature)
+        self.temp_area = QtWidgets.QFrame()
+        self.temp_area.setObjectName("cell")
         temp_layout = QtWidgets.QHBoxLayout(self.temp_area)
         temp_layout.setContentsMargins(0, 0, 0, 0)
         self.temperature = label("—", "big")
@@ -45,6 +48,7 @@ class SyringePanel(QtWidgets.QFrame):
         temp_layout.addStretch()
         temp_layout.addWidget(self.target)
         layout.addWidget(self.temp_area)
+        layout.addWidget(label("Manter premido: temperatura", "dim"))
 
         self.material = button("—", self._pick_material, height=44)
         layout.addWidget(self.material)
@@ -57,6 +61,11 @@ class SyringePanel(QtWidgets.QFrame):
         layout.addLayout(moves)
         self.clean = button("Limpar bico", self._clean, height=44)
         layout.addWidget(self.clean)
+
+    def _select(self) -> None:
+        printer = self.tab.printer
+        if printer.can_act and self.tool_index != printer.active_tool:
+            self.tab.api.gcode(gc.select_tool(self.tool_index))
 
     def _edit_temperature(self) -> None:
         printer = self.tab.printer
