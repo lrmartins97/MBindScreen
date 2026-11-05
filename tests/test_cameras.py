@@ -1,6 +1,7 @@
 """Cameras tab, with the camera list of a real M-BIND."""
 import dataclasses
 
+from conftest import click_button
 from lib import machine
 from lib.panels.mainWindow import CAMERAS, HOME
 from lib.panels.widgets.cameraView import camera_transform
@@ -32,9 +33,12 @@ def open_tab(window, api, qtbot):
     return tab
 
 
-def test_cameras_come_with_portuguese_names_without_the_nozzlesight_view():
+def test_cameras_come_with_portuguese_names_and_the_ktamv_view_last():
     cameras = machine.cameras_from_webcams(REAL_LIST)
-    assert [c.name for c in cameras] == ["Bicos", "Interior", "Seringa T0", "Seringa T1"]
+    assert [c.name for c in cameras] == [
+        "Bicos", "Interior", "Seringa T0", "Seringa T1", "kTAMV",
+    ]
+    assert cameras[-1].is_analysis and not cameras[0].is_analysis
     assert cameras[0].flip_vertical and cameras[0].rotation == 180
     assert cameras[2].path == "/webcam3/?action=snapshot"
 
@@ -53,14 +57,49 @@ def test_grid_shows_every_camera_and_refreshes_each(window, api, qtbot):
     qtbot.waitUntil(lambda: all(tile.has_image for tile in tab.tiles), timeout=3000)
 
 
-def test_tapping_a_camera_opens_it_and_back_returns_to_the_grid(window, api, qtbot):
+def is_highlighted(tab, text):
+    return [c.text() for c in tab.choices if c.property("active")] == [text]
+
+
+def test_tapping_a_camera_in_the_grid_opens_it(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     qtbot.mouseClick(tab.tiles[2], QtCore.Qt.MouseButton.LeftButton)
     assert tab.big_views[2].isVisible()
     assert not any(tile.isVisible() for tile in tab.tiles)
+    assert is_highlighted(tab, "Seringa T0")
     qtbot.waitUntil(lambda: tab.big_views[2].has_image, timeout=2000)
-    tab.reset()
+
+
+def test_menu_chooses_each_camera_or_all_of_them(window, api, qtbot):
+    tab = open_tab(window, api, qtbot)
+    assert [c.text() for c in tab.choices] == [
+        "Todas", "Bicos", "Interior", "Seringa T0", "Seringa T1", "kTAMV",
+    ]
+    assert is_highlighted(tab, "Todas")
+    click_button(tab, "Interior")
+    assert tab.big_views[1].isVisible() and is_highlighted(tab, "Interior")
+    click_button(tab, "Seringa T1")  # straight from one camera to another
+    assert tab.big_views[3].isVisible() and not tab.big_views[1].isVisible()
+    click_button(tab, "Todas")
     assert all(tile.isVisible() for tile in tab.tiles)
+    assert is_highlighted(tab, "Todas")
+
+
+def test_ktamv_view_is_in_the_menu_but_not_in_the_grid(window, api, qtbot):
+    tab = open_tab(window, api, qtbot)
+    assert len(tab.tiles) == 4
+    assert tab.big_views[-1].url.endswith("/ktamv/image")
+    click_button(tab, "kTAMV")
+    assert tab.big_views[-1].isVisible() and is_highlighted(tab, "kTAMV")
+    assert tab.big_views[-1].interval_ms > tab.big_views[0].interval_ms
+
+
+def test_coming_back_to_the_tab_starts_on_all_cameras(window, api, qtbot):
+    tab = open_tab(window, api, qtbot)
+    click_button(tab, "Bicos")
+    window.goto(HOME)
+    window.goto(CAMERAS)
+    assert is_highlighted(tab, "Todas")
 
 
 def test_no_camera_is_requested_after_leaving_the_tab(window, api, qtbot):

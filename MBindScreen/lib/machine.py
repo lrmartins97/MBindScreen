@@ -64,7 +64,8 @@ CAMERA_NAMES = {
     "tool 0": "Seringa T0",
     "tool 1": "Seringa T1",
 }
-NOZZLESIGHT_IMAGE = "/ktamv/"  # the nozzle camera again, with NozzleSight's analysis on it
+NOZZLESIGHT_IMAGE = "/ktamv/"  # the nozzle camera again, with the vision server's analysis
+NOZZLESIGHT_NAME = "kTAMV"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -74,24 +75,25 @@ class Camera:
     flip_horizontal: bool = False
     flip_vertical: bool = False
     rotation: int = 0
+    is_analysis: bool = False
 
 
 def cameras_from_webcams(webcams: typing.Iterable[dict]) -> list[Camera]:
     """What Moonraker's server.webcams.list gives, reduced to what the screen shows."""
     cameras = [
         Camera(
-            CAMERA_NAMES.get(webcam["name"].lower(), webcam["name"]),
+            NOZZLESIGHT_NAME if NOZZLESIGHT_IMAGE in webcam["snapshot_url"]
+            else CAMERA_NAMES.get(webcam["name"].lower(), webcam["name"]),
             webcam["snapshot_url"],
             webcam.get("flip_horizontal", False),
             webcam.get("flip_vertical", False),
             webcam.get("rotation", 0),
+            NOZZLESIGHT_IMAGE in webcam["snapshot_url"],
         )
         for webcam in webcams
-        if webcam.get("enabled", True)
-        and webcam.get("snapshot_url")
-        and NOZZLESIGHT_IMAGE not in webcam["snapshot_url"]
+        if webcam.get("enabled", True) and webcam.get("snapshot_url")
     ]
-    return sorted(cameras, key=lambda camera: camera.name.lower())
+    return sorted(cameras, key=lambda camera: (camera.is_analysis, camera.name.lower()))
 
 
 def syringe_area(diameter: float) -> float:
