@@ -23,6 +23,7 @@ class Scrim(Clickable):
         outer.addStretch()
         outer.addWidget(self.box, alignment=CENTER)
         outer.addStretch()
+        self.clicked.connect(self.close_box)  # never a way to get stuck
 
     def open(self) -> None:
         self.box.fit()

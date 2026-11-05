@@ -111,7 +111,16 @@ class PopupBox(QtWidgets.QFrame):
         the width, which the outer centring layout would otherwise ignore."""
         layout = self.layout()
         layout.invalidate()
-        self.setFixedHeight(layout.totalHeightForWidth(self.width()))
+        if layout.hasHeightForWidth():
+            self.setFixedHeight(layout.totalHeightForWidth(self.width()))
+        else:  # without wrapped text totalHeightForWidth gives 1
+            self.setFixedHeight(layout.totalSizeHint().height())
+
+    def mousePressEvent(self, event) -> None:
+        event.accept()  # a touch on the box is not a touch outside it
+
+    def mouseReleaseEvent(self, event) -> None:
+        event.accept()
 
 
 def status_chip(text: str) -> QtWidgets.QLabel:
