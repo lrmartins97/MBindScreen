@@ -78,6 +78,10 @@ class SimulatedPrinter(QtCore.QObject):
         self._print_clock = 0.0
         self.camera_ok = True
         self.camera_requests = 0
+        self.webcams = [
+            {"name": name, "enabled": True, "snapshot_url": f"/webcam{port}/?action=snapshot"}
+            for name, port in (("Chamber", ""), ("Nozzle Cam", 2), ("tool 0", 3), ("tool 1", 4))
+        ]
         self._timer = QtCore.QTimer(self)
         self._timer.setInterval(TICK_MS)
         self._timer.timeout.connect(self._tick)
@@ -114,6 +118,9 @@ class SimulatedPrinter(QtCore.QObject):
         self.calls.append((method, params))
         if method == "printer.gcode.script":
             self.gcode(params["script"], callback)
+            return
+        if method == "server.webcams.list" and self.webcams is None:
+            callback(None, {"message": "Moonraker sem resposta"})
             return
         result = self._rpc(method, params or {})
         self.status.emit(self.state)
@@ -152,6 +159,8 @@ class SimulatedPrinter(QtCore.QObject):
 
     # --- JSON-RPC -------------------------------------------------------
     def _rpc(self, method: str, params: dict):
+        if method == "server.webcams.list":
+            return {"webcams": self.webcams}
         if method == "server.files.get_directory":
             return {"dirs": [{"dirname": "USB"}] if params["path"] == "gcodes" else [],
                     "files": FILES if params["path"] == "gcodes" else []}

@@ -17,18 +17,49 @@ MARK_COLOR = "#ff2d55"
 NO_IMAGE_BG = "#1d3a4f"
 RING_RADII = (0.08, 0.18)  # of the shorter side of the image
 MISSED_FRAMES_FOR_WARNING = 3
+CAPTION_MARGIN = 8
+CAPTION_PADDING = (10, 4)
+CAPTION_BG = QtGui.QColor(0, 0, 0, 150)
+
+
+def camera_transform(
+    flip_horizontal: bool, flip_vertical: bool, rotation: int
+) -> QtGui.QTransform:
+    """Mainsail's flips and rotation. Without them some images are upside down."""
+    transform = QtGui.QTransform()
+    transform.rotate(rotation)
+    transform.scale(-1 if flip_horizontal else 1, -1 if flip_vertical else 1)
+    return transform
 
 
 class CameraView(QtWidgets.QWidget):
-    def __init__(self, api, url: str, show_mark: bool = True) -> None:
+    clicked = QtCore.pyqtSignal(name="clicked")
+
+    def __init__(
+        self,
+        api,
+        url: str,
+        show_mark: bool = True,
+        interval_ms: int = FRAME_INTERVAL_MS,
+        transform: typing.Optional[QtGui.QTransform] = None,
+        caption: str = "",
+    ) -> None:
         super().__init__()
         self.api, self.url, self.show_mark = api, url, show_mark
+        self.interval_ms = interval_ms
+        self.transform = transform or QtGui.QTransform()
+        self.caption = caption
         self.zoom = 1
         self.frame: typing.Optional[QtGui.QPixmap] = None
         self.missed = 0
         self._running = False
         self._waiting = False
-        self.setMinimumSize(320, 240)
+        self.setMinimumSize(160, 120)
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self.rect().contains(event.position().toPoint()):
+            self.clicked.emit()
+        super().mouseReleaseEvent(event)
 
     # --- polling --------------------------------------------------------
     def showEvent(self, event) -> None:
@@ -52,10 +83,10 @@ class CameraView(QtWidgets.QWidget):
             if self.missed == MISSED_FRAMES_FOR_WARNING:
                 logger.warning("No image from %s", self.url)
         else:
-            self.frame, self.missed = frame, 0
+            self.frame, self.missed = frame.transformed(self.transform), 0
         self.update()
         if self._running:
-            QtCore.QTimer.singleShot(FRAME_INTERVAL_MS, self._request)
+            QtCore.QTimer.singleShot(self.interval_ms, self._request)
 
     def set_zoom(self, zoom: int) -> None:
         self.zoom = zoom
@@ -87,6 +118,14 @@ class CameraView(QtWidgets.QWidget):
         for ratio in RING_RADII:
             painter.drawEllipse(center, side * ratio, side * ratio)
 
+    def _draw_caption(self, painter: QtGui.QPainter) -> None:
+        box = painter.fontMetrics().boundingRect(self.caption)
+        box.adjust(-CAPTION_PADDING[0], -CAPTION_PADDING[1], *CAPTION_PADDING)
+        box.moveTopLeft(QtCore.QPoint(CAPTION_MARGIN, CAPTION_MARGIN))
+        painter.fillRect(box, CAPTION_BG)
+        painter.setPen(QtGui.QColor("#ffffff"))
+        painter.drawText(box, QtCore.Qt.AlignmentFlag.AlignCenter, self.caption)
+
     def paintEvent(self, _event) -> None:
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
@@ -96,6 +135,8 @@ class CameraView(QtWidgets.QWidget):
             painter.drawText(
                 self.rect(), QtCore.Qt.AlignmentFlag.AlignCenter, "Sem imagem da câmara"
             )
+            if self.caption:
+                self._draw_caption(painter)
             return
         image = self._visible_part().scaled(
             self.size(),
@@ -107,4 +148,6 @@ class CameraView(QtWidgets.QWidget):
         painter.drawPixmap(area, image)
         if self.show_mark:
             self._draw_mark(painter, area)
+        if self.caption:
+            self._draw_caption(painter)
 

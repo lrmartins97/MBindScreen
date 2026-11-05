@@ -185,7 +185,7 @@ class MoonWebSocket(QtCore.QObject):
 
     def camera_url(self, path: str) -> str:
         """Camera paths go through nginx on port 80, like Mainsail and NozzleSight."""
-        return f"http://{self._host}{path}"
+        return path if "://" in path else f"http://{self._host}{path}"
 
     def _get_pixmap(self, url: str, callback: ImageCallback) -> None:
         request = QtNetwork.QNetworkRequest(QtCore.QUrl(url))

@@ -7,6 +7,7 @@ import time
 from lib.moonrakerComm import MoonWebSocket
 from lib.panels.alignPage import AlignPage
 from lib.panels.calibrationTab import CalibrationTab
+from lib.panels.camerasTab import CamerasTab
 from lib.panels.controlTab import ControlTab
 from lib.panels.filesPage import FilesPage
 from lib.panels.homeTab import HomeTab
@@ -23,8 +24,8 @@ from lib.utils.widgets import NavBar
 from PyQt6 import QtCore, QtWidgets
 
 logger = logging.getLogger(__name__)
-TABS = ("home", "controls", "syringe", "calibrate", "settings")
-HOME, CONTROL, SYRINGES, CALIBRATION, SETTINGS = range(5)
+TABS = ("home", "controls", "syringe", "cameras", "calibrate", "settings")
+HOME, CONTROL, SYRINGES, CAMERAS, CALIBRATION, SETTINGS = range(6)
 RESTART_DELAY_MS = 1000
 ACTIVITY = (
     QtCore.QEvent.Type.MouseButtonPress,
@@ -61,6 +62,7 @@ class MainWindow(QtWidgets.QWidget):
         self.home = HomeTab(self.printer)
         self.control = ControlTab(self.printer, self.api)
         self.syringes = SyringeTab(self.printer, self.api, self.runner)
+        self.cameras = CamerasTab(self.api)
         self.calibration = CalibrationTab(self.printer, self.api, self.runner)
         self.settings = SettingsTab(self.printer, self.api)
         self.printing = PrintTab(self.printer, self.api)
@@ -70,6 +72,7 @@ class MainWindow(QtWidgets.QWidget):
             self.home,
             self.control,
             self.syringes,
+            self.cameras,
             self.calibration,
             self.settings,
             self.printing,
@@ -141,6 +144,8 @@ class MainWindow(QtWidgets.QWidget):
     def _check_sleep(self) -> None:
         minutes = self.config.sleep_minutes
         if minutes and time.monotonic() - self._last_touch > minutes * 60:
+            if self.stack.currentWidget() is self.cameras:
+                self.goto(HOME)  # a sleeping screen must not keep fetching images
             self.sleep_cover.setGeometry(self.rect())
             self.sleep_cover.show()
             self.sleep_cover.raise_()

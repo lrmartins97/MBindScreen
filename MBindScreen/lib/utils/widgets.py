@@ -311,7 +311,7 @@ class NavBar(QtWidgets.QFrame):
         for i in range(len(self.names)):
             widget = QtWidgets.QToolButton()
             widget.setCheckable(True)
-            widget.setFixedSize(84, 70)
+            widget.setFixedSize(84, 62)
             widget.setIconSize(QtCore.QSize(34, 34))
             self.group.addButton(widget, i)
             layout.addWidget(widget)

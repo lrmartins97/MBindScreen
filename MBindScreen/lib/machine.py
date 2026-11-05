@@ -6,6 +6,7 @@ gcodeCommands.py are the only places to change.
 """
 from __future__ import annotations
 
+import dataclasses
 import math
 import typing
 
@@ -54,6 +55,43 @@ PREPARE_STAGES = (
     ("Linha de purga", "Purga"),
 )
 PRINTING_MESSAGE = "A imprimir"
+
+
+# Names as they are in Mainsail on the machines; any other name is shown as it is.
+CAMERA_NAMES = {
+    "chamber": "Interior",
+    "nozzle cam": "Bicos",
+    "tool 0": "Seringa T0",
+    "tool 1": "Seringa T1",
+}
+NOZZLESIGHT_IMAGE = "/ktamv/"  # the nozzle camera again, with NozzleSight's analysis on it
+
+
+@dataclasses.dataclass(frozen=True)
+class Camera:
+    name: str
+    path: str
+    flip_horizontal: bool = False
+    flip_vertical: bool = False
+    rotation: int = 0
+
+
+def cameras_from_webcams(webcams: typing.Iterable[dict]) -> list[Camera]:
+    """What Moonraker's server.webcams.list gives, reduced to what the screen shows."""
+    cameras = [
+        Camera(
+            CAMERA_NAMES.get(webcam["name"].lower(), webcam["name"]),
+            webcam["snapshot_url"],
+            webcam.get("flip_horizontal", False),
+            webcam.get("flip_vertical", False),
+            webcam.get("rotation", 0),
+        )
+        for webcam in webcams
+        if webcam.get("enabled", True)
+        and webcam.get("snapshot_url")
+        and NOZZLESIGHT_IMAGE not in webcam["snapshot_url"]
+    ]
+    return sorted(cameras, key=lambda camera: camera.name.lower())
 
 
 def syringe_area(diameter: float) -> float:

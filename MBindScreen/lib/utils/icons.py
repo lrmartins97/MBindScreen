@@ -17,6 +17,7 @@ PATHS = {
         '<path d="M9 2h6M12 2v5"/><path d="M8 7h8v11H8z"/><path d="M8 11h3M8 14h3"/>'
         '<path d="M10.5 18h3l-1.5 4z"/>'
     ),
+    "cameras": '<path d="M3 8h4l2-3h6l2 3h4v11H3z"/><circle cx="12" cy="13" r="3.5"/>',
     "calibrate": (
         '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'
         '<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'
