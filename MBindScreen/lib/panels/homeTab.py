@@ -10,6 +10,7 @@ from lib.utils.widgets import Clickable, label, set_card_active, status_chip
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 PHOTO = pathlib.Path(__file__).resolve().parent.parent / "ui" / "resources" / "mbind.png"
+PHOTO_HEIGHT = 270  # 800x480 screen: leaves room for the trial banner
 
 
 class ToolCard(Clickable):
@@ -71,7 +72,7 @@ class HomeTab(QtWidgets.QWidget):
         photo = label()
         photo.setPixmap(
             QtGui.QPixmap(str(PHOTO)).scaledToHeight(
-                300, QtCore.Qt.TransformationMode.SmoothTransformation
+                PHOTO_HEIGHT, QtCore.Qt.TransformationMode.SmoothTransformation
             )
         )
         photo.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)

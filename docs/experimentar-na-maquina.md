@@ -10,7 +10,7 @@ as duas o hostname `MBind`.
 | Arranque da máquina, serviço do KlipperScreen | Nada |
 | Klipper, macros, `printer_data` | Nada |
 | Moonraker e `moonraker.conf` | Nada |
-| Fica em disco | `~/MBindScreen`, `~/.MBindScreen-env` e umas bibliotecas de sistema pequenas (`scripts/system-dependencies.json`) |
+| Fica em disco | `~/MBindScreen`, `~/.MBindScreen-env`, os logs e as bibliotecas de sistema que faltavam (`scripts/system-dependencies.json`). Tudo sai com o desinstalador |
 | Fica em `/run` | O serviço temporário: desaparece ao reiniciar |
 
 Quando a experiência acaba, por tempo, por erro ou por comando, o KlipperScreen volta
@@ -84,11 +84,28 @@ Por ordem, da mais simples para a mais drástica:
 git -C ~/MBindScreen pull
 ```
 
-## Remover
+## Remover tudo
 
 ```
-rm -rf ~/MBindScreen ~/.MBindScreen-env
+bash ~/MBindScreen/scripts/uninstall.sh
 ```
+
+Serve para a experiência e para o `install.sh`, e recusa correr com a máquina a
+trabalhar. Sai tudo isto:
+
+- Serviços, autorização no Moonraker e bloco do `moonraker.conf`.
+- O código, o ambiente Python, os logs, `~/.config/mbind-screen` e `MBindScreen.cfg`.
+- Os pacotes que o MBindScreen instalou, com as dependências. Os que já existiam ficam
+  intactos, porque a instalação regista só os novos em
+  `~/.config/mbind-screen/pacotes-instalados`.
+
+Se algum pacote novo tiver passado a ser usado por outro programa, não é removido e o
+desinstalador mostra o comando para o fazer à mão. Também fica o que estiver no git do
+`m-bind-config`, que se muda nesse repositório.
+
+Só restam registos do sistema: o histórico do apt e do dpkg e o journal. Um pacote
+acrescentado ao `system-dependencies.json` e instalado pelo Update Manager não fica
+registado, e tem de se remover à mão.
 
 ## Instalar a sério
 

@@ -10,38 +10,28 @@ ENV_DIR="${MBINDSCREEN_ENV:-$HOME/.MBindScreen-env}"
 ASVC="$HOME/printer_data/moonraker.asvc"
 MOONRAKER_CONF="$HOME/printer_data/config/moonraker.conf"
 UNIT_DIR=/etc/systemd/system
+# shellcheck source=comum.sh
+source "$SCRIPT_DIR/comum.sh"
 
 info() { printf '\033[0;36m%s\033[0m\n' "$1"; }
-fail() { printf '\033[0;31m%s\033[0m\n' "$1"; exit 1; }
 
 check_requirements() {
     [ "$(id -u)" -ne 0 ] || fail "Corre como o utilizador da impressora, sem sudo."
     [ -f "$UNIT_DIR/KlipperScreen.service" ] \
         || fail "KlipperScreen nao encontrado: e' preciso o X e o servico dele."
     [ -f "$ASVC" ] || fail "$ASVC nao encontrado: o Moonraker esta instalado?"
-    local state
-    state="$(curl -fsS 'http://localhost:7125/printer/objects/query?print_stats=state' \
-        2>/dev/null || true)"
-    case "$state" in
-        *'"printing"'*|*'"paused"'*)
-            fail "Ha uma impressao a decorrer. Instala quando acabar (o Moonraker reinicia)." ;;
-    esac
+    refuse_if_busy  # o Moonraker reinicia
 }
 
 install_packages() {
     info "A instalar pacotes do sistema"
-    local packages
-    packages="$(python3 -c "import json,sys; \
-print(' '.join(json.load(open(sys.argv[1]))['debian']))" \
-        "$SCRIPT_DIR/system-dependencies.json")"
-    # shellcheck disable=SC2086
-    sudo apt-get install -y $packages
+    install_missing_packages "$SCRIPT_DIR/system-dependencies.json"
 }
 
 install_virtualenv() {
     info "A preparar o ambiente Python em $ENV_DIR"
     [ -x "$ENV_DIR/bin/python" ] || python3 -m venv "$ENV_DIR"
-    "$ENV_DIR/bin/pip" install --disable-pip-version-check -q -r "$SCRIPT_DIR/requirements.txt"
+    "$ENV_DIR/bin/pip" install --disable-pip-version-check --no-cache-dir -q -r "$SCRIPT_DIR/requirements.txt"
     QT_QPA_PLATFORM=offscreen "$ENV_DIR/bin/python" -c \
         "from PyQt6 import QtSvg, QtWebSockets, QtWidgets; print('PyQt6 OK')"
 }
@@ -69,7 +59,8 @@ install_services() {
 allow_in_moonraker() {
     if ! grep -qx "MBindScreen" "$ASVC"; then
         info "A autorizar o servico no Moonraker"
-        printf '\nMBindScreen\n' >> "$ASVC"
+        [ -z "$(tail -c 1 "$ASVC")" ] || echo >> "$ASVC"
+        echo MBindScreen >> "$ASVC"
     fi
 }
 

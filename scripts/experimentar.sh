@@ -7,6 +7,7 @@
 #   experimentar.sh parar            volta ao KlipperScreen ja
 #   experimentar.sh estado           diz o que esta a correr
 #
+# Para tirar tudo da maquina: scripts/uninstall.sh
 # Nao toca no arranque da maquina, no Moonraker, nem em printer_data. O servico fica
 # em /run e desaparece ao reiniciar: uma falha de luz volta ao KlipperScreen.
 set -euo pipefail
@@ -18,33 +19,19 @@ UNIT=MBindScreen-try
 UNIT_FILE="/run/systemd/system/$UNIT.service"
 DEFAULT_MINUTES=10
 MAX_MINUTES=120
-
-fail() { printf '\033[0;31m%s\033[0m\n' "$1"; exit 1; }
+# shellcheck source=comum.sh
+source "$SCRIPT_DIR/comum.sh"
 
 prepare() {
-    local packages
-    packages="$(python3 -c "import json,sys; \
-print(' '.join(json.load(open(sys.argv[1]))['debian']))" \
-        "$SCRIPT_DIR/system-dependencies.json")"
+    refuse_if_busy
     echo "A instalar bibliotecas (nao atualiza o que ja esta instalado)..."
-    # shellcheck disable=SC2086
-    sudo apt-get install -y --no-upgrade $packages
+    install_missing_packages "$SCRIPT_DIR/system-dependencies.json"
     echo "A preparar o ambiente Python em $ENV_DIR..."
     [ -x "$ENV_DIR/bin/python" ] || python3 -m venv "$ENV_DIR"
-    "$ENV_DIR/bin/pip" install --disable-pip-version-check -q -r "$SCRIPT_DIR/requirements.txt"
+    "$ENV_DIR/bin/pip" install --disable-pip-version-check --no-cache-dir -q -r "$SCRIPT_DIR/requirements.txt"
     QT_QPA_PLATFORM=offscreen "$ENV_DIR/bin/python" -c \
         "from PyQt6 import QtSvg, QtWebSockets, QtWidgets; print('PyQt6 OK')"
     echo "Pronto. A seguir: bash $0 ver"
-}
-
-refuse_if_printing() {
-    local state
-    state="$(curl -fsS 'http://localhost:7125/printer/objects/query?print_stats=state' \
-        2>/dev/null || true)"
-    case "$state" in
-        *'"printing"'*|*'"paused"'*)
-            fail "Ha uma impressao a decorrer. Experimenta quando acabar." ;;
-    esac
 }
 
 start() {
@@ -53,7 +40,7 @@ start() {
     [ "$minutes" -le "$MAX_MINUTES" ] || fail "No maximo $MAX_MINUTES minutos de cada vez."
     [ -x "$ENV_DIR/bin/python" ] || fail "Corre primeiro: bash $0 preparar"
     [ -f /etc/systemd/system/KlipperScreen.service ] || fail "KlipperScreen nao encontrado."
-    refuse_if_printing
+    refuse_if_busy
     getent group klipperscreen > /dev/null && group_line="SupplementaryGroups=klipperscreen"
     sed -e "s|MBS_GROUP_LINE|$group_line|" -e "s|MBS_SECONDS|$((minutes * 60))|" \
         -e "s|MBS_MODE_ARGS|$mode_args|" -e "s|MBS_USER|$USER|g" -e "s|MBS_UID|$(id -u)|g" \

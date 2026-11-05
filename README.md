@@ -52,7 +52,8 @@ para o que acrescentar ao repositório da configuração.
   (`OnFailure=`). A escolha gravada não muda, por isso o próximo arranque volta a tentar.
 - Se o Moonraker atualizar o **KlipperScreen**, reinicia-o e o ecrã salta para ele até
   ao próximo reinício da máquina. Volta-se com o botão.
-- Remover tudo: `bash ~/MBindScreen/scripts/uninstall.sh`.
+- Remover tudo, código e pacotes novos incluídos: `bash ~/MBindScreen/scripts/uninstall.sh`.
+  Detalhes em [`docs/experimentar-na-maquina.md`](docs/experimentar-na-maquina.md).
 
 ## Atualizar
 

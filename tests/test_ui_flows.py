@@ -1,6 +1,9 @@
 """Whole-window flows: tap the real buttons, check what reaches the printer."""
 import pathlib
 
+import pytest
+
+from configfile import ScreenConfig
 from conftest import click_button, top_dialog
 from lib import machine, screenSwitch
 from lib.moonrakerComm import (
@@ -8,7 +11,8 @@ from lib.moonrakerComm import (
     build_subscription,
     is_own_update_done,
 )
-from lib.panels.mainWindow import CONTROL, HOME, SETTINGS, SYRINGES
+from lib.panels.mainWindow import CONTROL, HOME, SETTINGS, SYRINGES, MainWindow
+from lib.utils.theme import QSS
 
 
 def test_starts_connected_on_home(window):
@@ -270,3 +274,12 @@ def test_subscription_only_asks_for_existing_objects():
                                "gcode_macro _MATERIAL_STATE"])
     assert "heater_bed" not in subs and "extruder1" not in subs
     assert subs["gcode_macro _MATERIAL_3"] == ["name"]
+
+
+@pytest.mark.parametrize("read_only", [False, True])
+def test_every_page_fits_the_screen(qtbot, qapp, api, read_only):
+    """A taller window is cut at the bottom edge, emergency stop included."""
+    qapp.setStyleSheet(QSS)
+    win = MainWindow(ScreenConfig(), api, read_only)
+    qtbot.addWidget(win)
+    assert win.minimumSizeHint().height() <= 480
