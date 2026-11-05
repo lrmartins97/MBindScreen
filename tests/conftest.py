@@ -35,6 +35,11 @@ def top_dialog(window):
     return [s for s in window.findChildren(Scrim) if s.isVisible()][-1]
 
 
+def click_jog(page, name):
+    """Press the jog arrow for this axis and sign, e.g. "X+"."""
+    next(b for b in page.jog_buttons if b.accessibleName() == name).click()
+
+
 def click_button(root, text):
     """Press the visible button with this text, as a finger would."""
     from PyQt6 import QtCore, QtWidgets

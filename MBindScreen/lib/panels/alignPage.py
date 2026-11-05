@@ -13,10 +13,10 @@ import logging
 
 from lib import gcodeCommands as gc
 from lib import machine
-from lib.panels.widgets.cameraView import CameraView
+from lib.panels.widgets.cameraView import CameraView, camera_transform
 from lib.panels.widgets.dialogs import confirm
 from lib.prompts import is_align_prompt
-from lib.utils.widgets import ChoiceRow, button, card, label
+from lib.utils.widgets import ChoiceRow, arrow_button, button, card, label
 from PyQt6 import QtWidgets
 
 logger = logging.getLogger(__name__)
@@ -27,27 +27,29 @@ WAITING_TEXT = "A cabeça está a deslocar-se. Aguarda."
 
 
 class AlignPage(QtWidgets.QFrame):
-    def __init__(self, printer, api, runner, camera_url, window) -> None:
+    def __init__(self, printer, api, runner, camera_url, mirror, window) -> None:
         super().__init__(window)
         self.printer, self.api, self.runner = printer, api, runner
         root = QtWidgets.QHBoxLayout(self)
         root.setContentsMargins(12, 10, 12, 10)
         root.setSpacing(10)
-        root.addLayout(self._build_camera(camera_url), 1)
+        root.addLayout(self._build_camera(camera_url, mirror), 1)
         root.addLayout(self._build_controls())
         printer.updated.connect(self.refresh)
         runner.changed.connect(self.refresh)
         self.hide()
 
     # --- layout ---------------------------------------------------------
-    def _build_camera(self, camera_url: str) -> QtWidgets.QVBoxLayout:
+    def _build_camera(self, camera_url: str, mirror: bool) -> QtWidgets.QVBoxLayout:
         column = QtWidgets.QVBoxLayout()
         column.setSpacing(6)
         self.title = label("", "cardTitle")
         self.step = label("", "dim")
         self.step.setWordWrap(True)
         self.step.setFixedHeight(34)
-        self.camera = CameraView(self.api, camera_url)
+        self.camera = CameraView(
+            self.api, camera_url, transform=camera_transform(mirror, False, 0)
+        )
         self.zooms = ChoiceRow(ZOOM_LEVELS, "x", DEFAULT_ZOOM_INDEX)
         for index, widget in enumerate(self.zooms.buttons):
             widget.clicked.connect(lambda _=False, i=index: self._zoom(i))
@@ -66,13 +68,18 @@ class AlignPage(QtWidgets.QFrame):
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(6)
         self.jog_buttons = []
-        for text, axis, sign, row, col in (
-            ("Y+", "Y", 1, 0, 1),
-            ("X−", "X", -1, 1, 0),
-            ("X+", "X", 1, 1, 2),
-            ("Y−", "Y", -1, 2, 1),
+        for direction, axis, sign, row, col in (
+            ("up", "Y", 1, 0, 1),
+            ("left", "X", -1, 1, 0),
+            ("right", "X", 1, 1, 2),
+            ("down", "Y", -1, 2, 1),
         ):
-            widget = button(text, lambda a=axis, s=sign: self._jog(a, s), height=60)
+            widget = arrow_button(
+                direction,
+                f"{axis}{'+' if sign > 0 else '-'}",
+                lambda a=axis, s=sign: self._jog(a, s),
+                60,
+            )
             grid.addWidget(widget, row, col)
             self.jog_buttons.append(widget)
         self.position = label("", "dim")

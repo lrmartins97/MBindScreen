@@ -29,9 +29,6 @@ e o Moonraker só se aplicam ao `install.sh`.
 
 - **Wi-Fi:** não há configuração de rede. Mostra o IP em Definições > Sistema; para
   mudar de rede usa-se o KlipperScreen.
-- **Câmara na calibração X/Y manual:** mostra a imagem tal como vem da câmara, sem a
-  inversão do Mainsail que o separador Câmaras aplica. Decidir na máquina, ao confirmar
-  o sentido do jog.
 - **Reentrar numa calibração manual:** se o ecrã reiniciar a meio, a janela da macro
   perde-se e só resta Cancelar.
 - **Tamanho das seringas:** as contas de volume usam o `filament_diameter` do T0 (15 mm).

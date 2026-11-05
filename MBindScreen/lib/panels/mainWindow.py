@@ -98,6 +98,7 @@ class MainWindow(QtWidgets.QWidget):
             self.api,
             self.runner,
             self.api.camera_url(config.calibration_camera),
+            config.calibration_mirror,
             self,
         )
         self.overlays = [

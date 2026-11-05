@@ -20,6 +20,7 @@ class ScreenConfig:
     port: int = 7125
     sleep_minutes: int = 0
     calibration_camera: str = DEFAULT_CALIBRATION_CAMERA
+    calibration_mirror: bool = True  # as in Mainsail: the head and the image go the same way
 
 
 def load_config() -> ScreenConfig:
@@ -33,4 +34,5 @@ def load_config() -> ScreenConfig:
         calibration_camera=parser.get(
             "camera", "calibration", fallback=DEFAULT_CALIBRATION_CAMERA
         ),
+        calibration_mirror=parser.getboolean("camera", "calibration_mirror", fallback=True),
     )

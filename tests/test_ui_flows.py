@@ -4,7 +4,7 @@ import pathlib
 import pytest
 
 from configfile import ScreenConfig
-from conftest import click_button, top_dialog
+from conftest import click_button, click_jog, top_dialog
 from lib import machine, screenSwitch
 from lib.moonrakerComm import (
     allowed_when_read_only,
@@ -69,6 +69,15 @@ def test_jog_needs_home_and_never_passes_z_zero(window, api):
     plate_up.click()
     assert api.sent[-1].startswith("G91\nG1 Z-8")  # nothing else sent
     assert "Limite" in tab.hint.text()
+
+
+def test_jog_arrows_move_the_head_the_way_they_point(window, api):
+    window.goto(CONTROL)
+    api.gcode("G28")
+    window.control.distances.select(1)
+    click_jog(window.control, "X+")
+    assert " X" in api.sent[-1].replace("G1", "") and "-" not in api.sent[-1]
+    assert not window.control.jog_buttons[0].text()  # an arrow, no X/Y letters
 
 
 def test_uv_asks_for_confirmation_before_turning_on(window, api):

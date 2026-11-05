@@ -1,6 +1,6 @@
 """Manual X/Y calibration: camera, jog and the steps of the macros."""
 import pytest
-from conftest import click_button, top_dialog
+from conftest import click_button, click_jog, top_dialog
 from lib import gcodeCommands as gc
 from lib.panels.alignPage import AlignPage
 from lib.panels.widgets.cameraView import MISSED_FRAMES_FOR_WARNING, CameraView
@@ -38,10 +38,10 @@ def test_page_also_opens_when_started_from_mainsail(window, api):
 def test_jog_uses_the_macro_with_the_chosen_step(started, api):
     page = started.align
     page.steps.select(0)  # 0.01 mm
-    click_button(page, "X+")
+    click_jog(page, "X+")
     assert api.sent[-1] == "_ALIGN_JOG X=0.01"
     page.steps.select(4)  # 1 mm
-    click_button(page, "Y−")
+    click_jog(page, "Y-")
     assert api.sent[-1] == "_ALIGN_JOG Y=-1"
 
 
@@ -49,9 +49,24 @@ def test_jog_moves_the_head_and_the_position_follows(started, api):
     page = started.align
     start = started.printer.position("x")
     page.steps.select(2)  # 0.1 mm
-    click_button(page, "X−")
+    click_jog(page, "X-")
     assert started.printer.position("x") == pytest.approx(start - 0.1)
     assert f"{start - 0.1:.2f}" in page.position.text()
+
+
+def test_arrows_point_the_way_the_head_moves(started):
+    grid = started.align.jog_buttons[0].parentWidget().layout().itemAt(0).layout()
+    place = {
+        b.accessibleName(): grid.getItemPosition(grid.indexOf(b))[:2]
+        for b in started.align.jog_buttons
+    }
+    assert place["X+"][1] > place["X-"][1]  # right is further right
+    assert place["Y+"][0] < place["Y-"][0]  # up is higher
+
+
+def test_camera_image_is_mirrored_like_in_mainsail(started):
+    assert started.align.camera.transform.m11() == -1
+    assert started.align.camera.transform.m22() == 1
 
 
 def test_full_sequence_t0_then_t1_then_done(started, api):

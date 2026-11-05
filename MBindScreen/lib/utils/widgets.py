@@ -33,6 +33,9 @@ def label(text: str = "", name: str = "") -> QtWidgets.QLabel:
     return widget
 
 
+ARROW_SIZE = 32
+
+
 def button(
     text: str, callback: Slot, name: str = "", height: int = 0
 ) -> QtWidgets.QPushButton:
@@ -42,6 +45,17 @@ def button(
     if height:
         widget.setMinimumHeight(height)
     widget.clicked.connect(lambda _=False: callback())
+    return widget
+
+
+def arrow_button(
+    direction: str, name: str, callback: Slot, height: int
+) -> QtWidgets.QPushButton:
+    """Jog button. ``name`` is the axis and sign, e.g. "X+"."""
+    widget = button("", callback, height=height)
+    widget.setIcon(icon(f"arrow_{direction}", ACCENT, ARROW_SIZE))
+    widget.setIconSize(QtCore.QSize(ARROW_SIZE, ARROW_SIZE))
+    widget.setAccessibleName(name)
     return widget
 
 

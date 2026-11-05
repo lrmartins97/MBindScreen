@@ -9,7 +9,15 @@ from lib import machine
 from lib.panels.widgets.dialogs import confirm
 from lib.utils.icons import pixmap
 from lib.utils.theme import ACCENT
-from lib.utils.widgets import ChoiceRow, LevelSlider, button, card, label, set_active
+from lib.utils.widgets import (
+    ChoiceRow,
+    LevelSlider,
+    arrow_button,
+    button,
+    card,
+    label,
+    set_active,
+)
 from PyQt6 import QtWidgets
 
 logger = logging.getLogger(__name__)
@@ -65,17 +73,24 @@ class ControlTab(QtWidgets.QWidget):
         grid.setSpacing(6)
         self.jog_buttons = []
 
-        def jog_button(text: str, axis: str, sign: int, row: int, col: int) -> None:
-            widget = button(text, lambda: self._jog(axis, sign), height=64)
+        # Seen from the front: X+ moves the head right, Y+ to the back (up on the screen).
+        def jog_arrow(direction: str, axis: str, sign: int, row: int, col: int) -> None:
+            name = f"{axis.upper()}{'+' if sign > 0 else '-'}"
+            widget = arrow_button(direction, name, lambda: self._jog(axis, sign), 64)
             grid.addWidget(widget, row, col)
             self.jog_buttons.append(widget)
 
-        jog_button("Y+", "y", 1, 0, 1)
-        jog_button("X−", "x", -1, 1, 0)
-        jog_button("X+", "x", 1, 1, 2)
-        jog_button("Y−", "y", -1, 2, 1)
-        jog_button("Prato\n▲", "z", -1, 0, 3)
-        jog_button("Prato\n▼", "z", 1, 2, 3)
+        def plate_button(text: str, sign: int, row: int) -> None:
+            widget = button(text, lambda: self._jog("z", sign), height=64)
+            grid.addWidget(widget, row, 3)
+            self.jog_buttons.append(widget)
+
+        jog_arrow("up", "y", 1, 0, 1)
+        jog_arrow("left", "x", -1, 1, 0)
+        jog_arrow("right", "x", 1, 1, 2)
+        jog_arrow("down", "y", -1, 2, 1)
+        plate_button("Prato\n▲", -1, 0)
+        plate_button("Prato\n▼", 1, 2)
         self.home = button("Home", self._home, "accent", 64)
         grid.addWidget(self.home, 1, 1)
         self.z_label = label("Z", "dim")
