@@ -1,0 +1,13 @@
+[Unit]
+Description=Escolhe o ecra da M-BIND no arranque (MBindScreen ou KlipperScreen)
+After=systemd-user-sessions.service moonraker.service
+# Estas referencias mantem as duas unidades carregadas no systemd mesmo paradas:
+# o Moonraker so' aceita mudar para servicos carregados quando ele arrancou.
+Before=MBindScreen.service KlipperScreen.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash MBS_DIR/scripts/boot-screen.sh MBS_HOME
+
+[Install]
+WantedBy=multi-user.target

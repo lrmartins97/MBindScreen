@@ -1,0 +1,36 @@
+[Unit]
+Description=MBindScreen (ecra tatil da M-BIND)
+# Quatro arranques falhados em 2 minutos: desiste e entra o KlipperScreen.
+StartLimitIntervalSec=120
+StartLimitBurst=4
+OnFailure=KlipperScreen.service
+# So' um ecra de cada vez: arrancar este para o KlipperScreen, e vice-versa.
+# O After= garante que o outro larga o ecra antes de este o usar.
+Conflicts=KlipperScreen.service
+After=KlipperScreen.service
+After=systemd-user-sessions.service plymouth-quit-wait.service
+After=dbus.socket systemd-logind.service moonraker.service
+Wants=dbus.socket systemd-logind.service
+ConditionPathExists=/dev/tty0
+
+# Igual ao servico do KlipperScreen, que e' o que se sabe funcionar nestas maquinas.
+[Service]
+Type=simple
+Restart=always
+RestartSec=2
+User=MBS_USER
+MBS_GROUP_LINE
+WorkingDirectory=MBS_DIR
+Environment=MBS_PYTHON=MBS_ENV/bin/python
+ExecStart=MBS_DIR/scripts/MBindScreen-start.sh
+ExecStartPost=+chvt 7
+UtmpIdentifier=tty7
+UtmpMode=user
+PAMName=%u
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=multi-user.target

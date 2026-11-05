@@ -1,0 +1,32 @@
+# Servico temporario do experimentar.sh. Vai para /run/systemd/system, que o sistema
+# apaga ao reiniciar. Nao ha [Install]: nunca arranca sozinho.
+[Unit]
+Description=Experiencia do MBindScreen (desaparece ao reiniciar)
+Conflicts=KlipperScreen.service
+After=KlipperScreen.service
+After=systemd-user-sessions.service plymouth-quit-wait.service
+After=dbus.socket systemd-logind.service moonraker.service
+Wants=dbus.socket systemd-logind.service
+ConditionPathExists=/dev/tty0
+
+[Service]
+Type=simple
+Restart=no
+RuntimeMaxSec=MBS_SECONDS
+User=MBS_USER
+MBS_GROUP_LINE
+WorkingDirectory=MBS_DIR
+Environment=MBS_PYTHON=MBS_ENV/bin/python
+Environment=MBS_ARGS=MBS_MODE_ARGS
+Environment=XDG_RUNTIME_DIR=/run/user/MBS_UID
+ExecStart=/usr/bin/xinit MBS_DIR/scripts/MBindScreen-session.sh
+ExecStartPost=+chvt 7
+# Acabe como acabar (tempo, erro ou comando), o KlipperScreen volta.
+ExecStopPost=+/usr/bin/systemctl --no-block start KlipperScreen.service
+UtmpIdentifier=tty7
+UtmpMode=user
+PAMName=%u
+TTYPath=/dev/tty7
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
