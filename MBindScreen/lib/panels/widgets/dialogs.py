@@ -95,6 +95,8 @@ def keyboard(
     title: str,
     on_ok: typing.Callable[[str], None],
     minimum: int = 1,
+    ok_text: str = "Ligar",
+    text: str = "",
 ) -> Scrim:
     """Text entry. Shows what is typed: a wrong character is what fails most."""
     scrim = Scrim(anchor, KEYBOARD_WIDTH)
@@ -103,7 +105,7 @@ def keyboard(
     scrim.content.addWidget(label(title, "value"))
     display = label("", "display")
     scrim.content.addWidget(display)
-    state = {"text": "", "layer": 0, "upper": False}
+    state = {"text": text, "layer": 0, "upper": False}
     keys: list[QtWidgets.QPushButton] = []
 
     def show() -> None:
@@ -151,7 +153,7 @@ def keyboard(
     bottom.addWidget(space, 1)
     bottom.addWidget(button("⌫", erase, height=48))
     bottom.addWidget(button("Voltar", scrim.close_box, height=48))
-    ok = button("Ligar", accept, "accent", 48)
+    ok = button(ok_text, accept, "accent", 48)
     bottom.addWidget(ok)
     scrim.content.addLayout(bottom)
     show()

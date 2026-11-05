@@ -6,6 +6,7 @@ import logging
 
 from lib import screenSwitch
 from lib.panels.widgets.dialogs import confirm
+from lib.panels.networkPage import HotspotPage, NetworkPage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
 from lib.utils.widgets import (
@@ -260,10 +261,20 @@ class SettingsTab(QtWidgets.QStackedWidget):
         root.addWidget(area, 1)
         self.addWidget(self.main)
         self.messages = MessagesPage(printer, self.reset)
-        self.wifi = WifiPage(api, self.reset)
+        back_to_network = lambda: self.setCurrentWidget(self.network)  # noqa: E731
+        self.wifi = WifiPage(api, back_to_network)
+        self.hotspot = HotspotPage(api, back_to_network)
+        self.network = NetworkPage(
+            api,
+            lambda: self.setCurrentWidget(self.wifi),
+            lambda: self.setCurrentWidget(self.hotspot),
+            self.reset,
+        )
+        self.addWidget(self.wifi)
+        self.addWidget(self.hotspot)
         pages = (
             ("bell", "Mensagens", "Avisos e consola do Klipper.", self.messages),
-            ("wifi", "Wi-Fi", "Rede atual e mudar de rede.", self.wifi),
+            ("wifi", "Rede", "Ethernet, Wi-Fi e hotspot.", self.network),
             ("info", "Sistema", "Versões e endereço de rede.", SystemPage(api, self.reset)),
             ("update", "Atualizações", "Estado do que o Moonraker atualiza.",
              UpdatesPage(printer, api, self.reset)),

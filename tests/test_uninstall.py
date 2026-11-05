@@ -33,6 +33,7 @@ STUBS = {
     "git": 'last="${@: -1}"; cat "$FAKE/git-${last#HEAD:}" 2>/dev/null || exit 1',
     "dpkg-query": 'sed "s/^/ii  /" "$FAKE/installed"',
     "id": "echo 1000",
+    "nmcli": 'echo "nmcli $*" >> "$FAKE/calls"',
     "apt-get": r"""
 echo "apt-get $*" >> "$FAKE/calls"
 case "$*" in
@@ -112,6 +113,12 @@ def test_removes_everything_of_ours_and_nothing_else(machine):
     assert (machine.fake / "installed").read_bytes() == b"bash\nxinit\n"
     assert "systemctl restart moonraker" in calls(machine)
     assert "start --no-block KlipperScreen" in calls(machine)
+
+
+def test_the_hotspot_profile_goes_and_nothing_else_of_the_network(machine):
+    assert run(machine, UNINSTALL).returncode == 0
+    network = [line for line in calls(machine).splitlines() if "nmcli" in line]
+    assert network == ["nmcli connection delete MBind-hotspot"]
 
 
 def test_a_section_after_the_block_survives(machine):

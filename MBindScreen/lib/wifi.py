@@ -19,7 +19,12 @@ WIFI_PROFILE = "802-11-wireless"
 OPEN_NETWORK = ("", "--")
 MINIMUM_PASSWORD = 8  # WPA
 
-DEVICES = ("-t", "-f", "DEVICE,TYPE", "device", "status")
+HOTSPOT = "MBind-hotspot"  # uninstall.sh removes this profile
+HOTSPOT_BAND = "bg"  # 2.4 GHz, the most compatible, as in klipper-hotspot
+HOTSPOT_CHANNEL = "6"
+
+DEVICES = ("-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status")
+RADIO = ("radio", "wifi")
 PROFILES = ("-t", "-f", "NAME,TYPE", "connection", "show")
 NETWORKS = ("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "device", "wifi", "list")
 
@@ -32,6 +37,14 @@ class Network:
     signal: int
     secured: bool
     in_use: bool
+
+
+@dataclasses.dataclass(frozen=True)
+class Device:
+    name: str
+    kind: str
+    state: str
+    connection: str
 
 
 def split_fields(line: str) -> list[str]:
@@ -76,12 +89,13 @@ def parse_networks(output: str) -> list[Network]:
     return sorted(best.values(), key=lambda n: (not n.in_use, -n.signal, n.ssid.lower()))
 
 
-def wifi_device(output: str) -> typing.Optional[str]:
-    for line in output.splitlines():
-        fields = split_fields(line)
-        if len(fields) == 2 and fields[1] == "wifi":
-            return fields[0]
-    return None
+def parse_devices(output: str) -> list[Device]:
+    fields = (split_fields(line) for line in output.splitlines())
+    return [Device(*f) for f in fields if len(f) == 4]
+
+
+def find_device(devices: typing.Iterable[Device], kind: str) -> typing.Optional[Device]:
+    return next((device for device in devices if device.kind == kind), None)
 
 
 def wifi_profiles(output: str) -> list[str]:
@@ -104,6 +118,13 @@ def join_profile_args(name: str) -> tuple[str, ...]:
 def join_args(ssid: str, password: str = "") -> tuple[str, ...]:
     args = ("device", "wifi", "connect", ssid)
     return (*args, "password", password) if password else args
+
+
+def hotspot_args(device: str, ssid: str, password: str) -> tuple[str, ...]:
+    return (
+        "device", "wifi", "hotspot", "ifname", device, "con-name", HOTSPOT,
+        "ssid", ssid, "band", HOTSPOT_BAND, "channel", HOTSPOT_CHANNEL, "password", password,
+    )
 
 
 class Nmcli(QtCore.QObject):

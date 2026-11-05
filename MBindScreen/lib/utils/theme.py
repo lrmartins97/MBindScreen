@@ -1,26 +1,26 @@
 """Colours and the application stylesheet.
 
-Light theme for a pharmacy machine: white with baby blue. Baby blue is too pale to
-read on white, so it only fills surfaces and buttons (with INK text on top). Icons,
-lines and progress use the stronger ACCENT. tests/test_theme.py checks the contrast.
+Light theme for a pharmacy machine: white with the Blocks blue, #00a8ff. Text on it
+is dark (INK), because white on this blue is hard to read. tests/test_theme.py checks
+the contrast. The pale surfaces are tints of the same blue.
 """
 
 BG = "#ffffff"
-NAV = "#dcf0fb"
-CARD = "#f0f8fd"
-BORDER = "#cfe7f5"
+NAV = "#e3f5ff"
+CARD = "#f2fbff"
+BORDER = "#c9ecff"
 TEXT = "#1d3a4f"
 DIM = "#587387"
 INK = "#12324a"  # text on baby blue
-BABY_BLUE = "#a9dcf5"
-BABY_BLUE_PRESSED = "#89cdee"
-ACCENT = "#2a7fb8"
+BABY_BLUE = "#00a8ff"
+BABY_BLUE_PRESSED = "#4dc2ff"
+ACCENT = "#00a8ff"
 RED = "#c62828"
 RED_PRESSED = "#a31f1f"
 GREEN = "#1b7f52"
-TRACK = "#dcebf4"
-BUTTON = "#e3f2fb"
-BUTTON_PRESSED = "#cde7f6"
+TRACK = "#dcf1fd"
+BUTTON = "#e3f6ff"
+BUTTON_PRESSED = "#c8ecff"
 DISABLED_TEXT = "#5a7080"
 DISABLED_BG = "#f1f5f8"
 SLIDER_OFF = "#b4c6d2"

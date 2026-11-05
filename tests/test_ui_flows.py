@@ -311,3 +311,11 @@ def test_a_touch_on_a_syringe_selects_it_and_only_holding_sets_the_temperature(
     assert top_dialog(window).isVisible()
     qtbot.mouseRelease(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
     assert len(api.sent) == sent  # the end of a hold selects nothing
+
+
+def test_holding_a_syringe_switches_to_that_head_while_setting_its_temperature(window, api):
+    window.goto(SYRINGES)
+    assert window.printer.active_tool == 0
+    window.syringes.panels[1].held.emit()
+    assert api.sent[-1] == "T1"
+    assert top_dialog(window).isVisible()

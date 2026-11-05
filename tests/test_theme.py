@@ -1,4 +1,8 @@
-"""The light theme must stay readable: WCAG AA for text, 3:1 for icons and lines."""
+"""The light theme must stay readable: WCAG AA for text.
+
+Icons and lines use the Blocks blue, #00a8ff, by decision of the user. It gives 2.6:1
+on white, below the 3:1 of WCAG, so this only guards against getting any paler.
+"""
 import pytest
 from lib.utils import theme
 
@@ -35,4 +39,4 @@ def test_text_is_readable(foreground, background):
 
 @pytest.mark.parametrize("background", [theme.BG, theme.CARD, theme.NAV, theme.TRACK])
 def test_icons_and_lines_are_visible(background):
-    assert contrast(theme.ACCENT, background) >= 3
+    assert contrast(theme.ACCENT, background) >= 2.2

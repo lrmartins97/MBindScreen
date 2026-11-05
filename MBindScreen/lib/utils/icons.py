@@ -26,6 +26,13 @@ PATHS = {
         '<path d="M2 9a15 15 0 0120 0M5.5 12.5a10 10 0 0113 0M9 16a5 5 0 016 0"/>'
         '<path d="M12 19.5h.01"/>'
     ),
+    "ethernet": (
+        '<rect x="3" y="3" width="18" height="12" rx="1"/><path d="M8 15v3h8v-3M12 18v3"/>'
+    ),
+    "hotspot": (
+        '<circle cx="12" cy="12" r="2"/>'
+        '<path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/>'
+    ),
     "calibrate": (
         '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'
         '<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'

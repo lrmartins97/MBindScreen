@@ -36,6 +36,8 @@ remove_services() {
     # O install.sh desativou-o; a experiencia nao.
     [ "$installed" = no ] || sudo systemctl enable KlipperScreen.service
     sudo systemctl start --no-block KlipperScreen.service
+    # O perfil do hotspot foi criado pelo ecra. As outras redes sao da maquina.
+    nmcli connection delete MBind-hotspot > /dev/null 2>&1
 }
 
 remove_update_manager_block() {

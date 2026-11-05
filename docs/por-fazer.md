@@ -27,6 +27,9 @@ e o Moonraker só se aplicam ao `install.sh`.
 
 ## Funcionalidades em falta
 
+- **Rede:** ao contrário do BlocksScreen, não há VLAN, IP fixo nem QR code do hotspot.
+- **klipper-hotspot:** o ecrã fala com o NetworkManager diretamente. Se esse projeto for
+  instalado nas máquinas, passar a usar as macros `HOTSPOT_*`, para haver um só perfil.
 - **Reentrar numa calibração manual:** se o ecrã reiniciar a meio, a janela da macro
   perde-se e só resta Cancelar.
 - **Tamanho das seringas:** as contas de volume usam o `filament_diameter` do T0 (15 mm).

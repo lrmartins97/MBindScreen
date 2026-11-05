@@ -4,10 +4,14 @@ from __future__ import annotations
 import logging
 
 from lib import wifi
+from lib.panels.networkPage import READ_ONLY_TEXT, is_read_only
 from lib.panels.widgets.dialogs import confirm, keyboard
 from lib.utils.widgets import ListRow, SubPage, button, clear_layout, label, scroll_column
 logger = logging.getLogger(__name__)
-READ_ONLY_TEXT = "No modo de experiência só leitura não se muda de rede."
+WIFI_OFF_WARNING = (
+    "Desligar o Wi-Fi? Sem cabo de rede, a máquina fica sem Mainsail nem SSH até o "
+    "voltares a ligar neste ecrã."
+)
 WARNING = (
     "Ligar a {ssid}? A máquina pode mudar de endereço, e quem estiver ligado pelo "
     "Mainsail ou por SSH perde a ligação."
@@ -35,7 +39,10 @@ class WifiPage(SubPage):
         self.address = ""
         self._loading = False
         self._pending: list[str] = []
+        self.radio_on = True
+        self.radio = button("Desligar", self._toggle_radio, height=46)
         self.scan = button("Procurar", self.refresh, height=46)
+        self.head.addWidget(self.radio)
         self.head.addWidget(self.scan)
         self.status = label("", "value")
         self.note = label("", "dim")
@@ -55,18 +62,30 @@ class WifiPage(SubPage):
             return
         self._loading = True
         self.status.setText("A procurar redes...")
-        self.nmcli.run(wifi.DEVICES, self._on_devices)
+        self.nmcli.run(wifi.RADIO, self._on_radio)
 
     def _unavailable(self) -> None:
         self._loading = False
         self.status.setText("Wi-Fi não disponível")
 
+    def _on_radio(self, _ok: bool, output: str) -> None:
+        self.radio_on = output.strip() != "disabled"
+        self.radio.setText("Desligar" if self.radio_on else "Ligar")
+        self.scan.setVisible(self.radio_on)
+        if self.radio_on:
+            self.nmcli.run(wifi.DEVICES, self._on_devices)
+            return
+        self._loading = False
+        self.status.setText("Wi-Fi desligado")
+        clear_layout(self.column)
+        self.rows = {}
+
     def _on_devices(self, ok: bool, output: str) -> None:
-        device = wifi.wifi_device(output) if ok else None
+        device = wifi.find_device(wifi.parse_devices(output) if ok else [], "wifi")
         if device is None:
             self._unavailable()
             return
-        self.nmcli.run(wifi.address_args(device), self._on_address)
+        self.nmcli.run(wifi.address_args(device.name), self._on_address)
 
     def _on_address(self, _ok: bool, output: str) -> None:
         self.address = output.strip().split("/")[0]
@@ -112,11 +131,25 @@ class WifiPage(SubPage):
             self.rows[network.ssid] = row
         self.column.addStretch()
 
-    # --- joining --------------------------------------------------------
+    # --- changing -------------------------------------------------------
+    def _toggle_radio(self) -> None:
+        if self._loading:
+            return
+        if is_read_only(self.api):
+            self.note.setText(READ_ONLY_TEXT)
+        elif self.radio_on:
+            confirm(self, WIFI_OFF_WARNING, lambda: self._set_radio("off"), "Desligar")
+        else:
+            self._set_radio("on")
+
+    def _set_radio(self, value: str) -> None:
+        logger.info("Wi-Fi radio %s", value)
+        self.nmcli.run((*wifi.RADIO, value), lambda _ok, _output: self.refresh())
+
     def _choose(self, network: wifi.Network) -> None:
         if network.in_use or self._loading:
             return
-        if getattr(self.api, "read_only", False):
+        if is_read_only(self.api):
             self.note.setText(READ_ONLY_TEXT)
             return
         self.note.setText("")

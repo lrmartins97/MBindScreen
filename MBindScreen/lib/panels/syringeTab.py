@@ -21,7 +21,7 @@ SPEEDS = (0.1, 0.2, 0.5, 1)  # mm/s of plunger travel
 
 
 class SyringePanel(HoldArea):
-    """A touch on the card selects this head; holding it sets the temperature."""
+    """A touch on the card selects this head; holding it also opens its temperature."""
 
     def __init__(self, tool: int, tab: "SyringeTab") -> None:
         super().__init__("card")
@@ -71,6 +71,7 @@ class SyringePanel(HoldArea):
         printer = self.tab.printer
         if not printer.ready:
             return
+        self._select()
         numpad(
             self,
             f"Temperatura T{self.tool_index}",
