@@ -41,6 +41,7 @@ start() {
     [ -x "$ENV_DIR/bin/python" ] || fail "Corre primeiro: bash $0 preparar"
     [ -f /etc/systemd/system/KlipperScreen.service ] || fail "KlipperScreen nao encontrado."
     refuse_if_busy
+    sudo systemctl stop MBindScreen.service 2> /dev/null || true
     getent group klipperscreen > /dev/null && group_line="SupplementaryGroups=klipperscreen"
     sed -e "s|MBS_GROUP_LINE|$group_line|" -e "s|MBS_SECONDS|$((minutes * 60))|" \
         -e "s|MBS_MODE_ARGS|$mode_args|" -e "s|MBS_USER|$USER|g" -e "s|MBS_UID|$(id -u)|g" \
@@ -54,7 +55,7 @@ start() {
 }
 
 stop() {
-    sudo systemctl stop "$UNIT" 2> /dev/null || true
+    sudo systemctl stop "$UNIT" MBindScreen.service 2> /dev/null || true
     sudo systemctl start --no-block KlipperScreen.service
     echo "De volta ao KlipperScreen."
 }

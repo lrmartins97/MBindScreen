@@ -12,6 +12,8 @@ REPO_CONFIG = pathlib.Path(__file__).resolve().parent.parent / "MBindScreen.cfg"
 MACHINE_CONFIG = pathlib.Path.home() / "printer_data" / "config" / "MBindScreen.cfg"
 # Same camera and same snapshot as NozzleSight ([ktamv] in calibracao/camara.cfg).
 DEFAULT_CALIBRATION_CAMERA = "/webcam2/snapshot?max_delay=0"
+# SHA-256 of the developer mode code. Each machine can have its own in MBindScreen.cfg.
+DEFAULT_DEVELOPER_CODE = "1112c695b7e5eab323c59750744ad57ac78c2d64718251f710e5a3a881819e27"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -21,6 +23,7 @@ class ScreenConfig:
     sleep_minutes: int = 0
     calibration_camera: str = DEFAULT_CALIBRATION_CAMERA
     calibration_mirror: bool = True  # as in Mainsail: the head and the image go the same way
+    developer_code: str = DEFAULT_DEVELOPER_CODE
 
 
 def load_config() -> ScreenConfig:
@@ -35,4 +38,5 @@ def load_config() -> ScreenConfig:
             "camera", "calibration", fallback=DEFAULT_CALIBRATION_CAMERA
         ),
         calibration_mirror=parser.getboolean("camera", "calibration_mirror", fallback=True),
+        developer_code=parser.get("screen", "developer_code", fallback=DEFAULT_DEVELOPER_CODE),
     )

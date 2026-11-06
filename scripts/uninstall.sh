@@ -23,6 +23,8 @@ remove_services() {
     local installed=no
     [ -f "$UNIT_DIR/MBindScreen.service" ] && installed=yes
     [ -f "$UNIT_DIR/mbind-screen-boot.service" ] && installed=yes
+    sudo rm -f "$UNIT_DIR/KlipperScreen.service.d/mbind-screen.conf"
+    sudo rmdir "$UNIT_DIR/KlipperScreen.service.d" 2> /dev/null
     echo "A remover os servicos"
     sudo systemctl stop "$TRIAL_UNIT" 2> /dev/null
     sudo systemctl reset-failed "$TRIAL_UNIT" 2> /dev/null
@@ -49,6 +51,19 @@ remove_update_manager_block() {
         { while (blanks > 0) { print ""; blanks-- } print }
     ' "$file")"
     printf '%s\n' "$cleaned" > "$file"  # mantem dono, permissoes e links
+}
+
+# O botao do atalho-ecra.sh
+remove_screen_menu() {
+    local file="$CONFIG_DIR/KlipperScreen.conf" cleaned
+    [ -f "$file" ] && grep -q "^\[menu __main more mbindscreen\]" "$file" || return 0
+    cleaned="$(awk '
+        /^\[menu __main more mbindscreen\]/ { skip = 1; next }
+        skip { if ($0 ~ /^[[:space:]]*$/) skip = 0; next }
+        { print }
+    ' "$file"; echo x)"
+    printf '%s' "${cleaned%x}" > "$file"
+    sudo systemctl restart KlipperScreen.service
 }
 
 remove_from_moonraker() {
@@ -117,6 +132,7 @@ main() {
     cd "$HOME" || fail "Sem acesso a $HOME"
     remove_services
     remove_from_moonraker
+    remove_screen_menu
     remove_packages
     remove_files
     echo

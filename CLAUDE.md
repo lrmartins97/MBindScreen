@@ -66,6 +66,13 @@ python MBindScreen/MBindScreen.py --simulate
 - Com uma máquina na rede, ver dados reais sem risco:
   `python MBindScreen/MBindScreen.py --host <IP> --read-only`.
 
+## Modo de programador
+
+Definições > Modo de programador pede um código e mostra Ecrã, Atualizações e Reiniciar.
+O repositório guarda só o SHA-256 do código; cada máquina pode ter o seu em
+`[screen] developer_code` no `MBindScreen.cfg`. Fecha sozinho quando o ecrã reinicia.
+O código não está escrito em nenhum ficheiro deste repositório.
+
 ## Testar na máquina
 
 ```

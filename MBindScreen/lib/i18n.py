@@ -237,6 +237,12 @@ ENGLISH_TEXT = {
     # Settings
     "Definições": "Settings",
     "Idioma": "Language",
+    "Modo de programador": "Developer mode",
+    "Código de programador": "Developer code",
+    "Código para mudar de ecrã, atualizar e reiniciar.":
+        "Code to switch screens, update and restart.",
+    "Ativo. Toca para sair.": "On. Tap to leave.",
+    "Código errado.": "Wrong code.",
     "Português ou inglês.": "Portuguese or English.",
     "Mensagens": "Messages",
     "Sistema": "System",

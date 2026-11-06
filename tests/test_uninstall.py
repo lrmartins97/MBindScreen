@@ -121,6 +121,68 @@ def test_the_hotspot_profile_goes_and_nothing_else_of_the_network(machine):
     assert network == ["nmcli connection delete MBind-hotspot"]
 
 
+SHORTCUT = (
+    'export MBINDSCREEN_UNIT_DIR="$HOME/units"; '
+    'bash "$HOME/MBindScreen/scripts/atalho-ecra.sh" '
+)
+
+
+def prepare_shortcut(machine):
+    (machine.home / "units").mkdir()
+    (machine.stubs / "getent").write_bytes(b"#!/bin/bash\nexit 1\n")
+    (machine.stubs / "getent").chmod(0o755)
+    (machine.data / "moonraker.asvc").write_bytes(b"klipper\n")
+    python = machine.home / ".MBindScreen-env/bin/python"
+    python.parent.mkdir()
+    python.write_bytes(b"#!/bin/bash\n")
+    python.chmod(0o755)
+    conf = machine.data / "config/KlipperScreen.conf"
+    original = b"[main]\nx: 1\n\n#~# --- Do not edit below this line --- #~#\n#~# [main]\n"
+    conf.write_bytes(original)
+    return conf, original
+
+
+def test_shortcut_adds_the_button_above_the_klipperscreen_section(machine):
+    conf, _ = prepare_shortcut(machine)
+    done = run(machine, SHORTCUT + "instalar")
+    assert done.returncode == 0, done.stdout + done.stderr
+    text = conf.read_text()
+    assert text.index("more mbindscreen") < text.index("#~#")
+    assert '"service": "MBindScreen"' in text
+    assert b"MBindScreen" in (machine.data / "moonraker.asvc").read_bytes()
+    unit = (machine.home / "units/MBindScreen.service").read_text()
+    assert not {"MBS_USER", "MBS_DIR", "MBS_ENV", "MBS_GROUP_LINE"} & set(unit.split("/"))
+    assert "User=1000" in unit
+    assert "Conflicts=MBindScreen.service" in (
+        machine.home / "units/KlipperScreen.service.d/mbind-screen.conf").read_text()
+    assert "enable" not in calls(machine)  # the boot stays as it was
+    assert "restart moonraker" in calls(machine)
+
+
+def test_shortcut_twice_adds_one_button(machine):
+    conf, _ = prepare_shortcut(machine)
+    run(machine, SHORTCUT + "instalar")
+    run(machine, SHORTCUT + "instalar")
+    assert conf.read_text().count("more mbindscreen") == 1
+
+
+def test_removing_the_shortcut_restores_everything_exactly(machine):
+    conf, original = prepare_shortcut(machine)
+    run(machine, SHORTCUT + "instalar")
+    done = run(machine, SHORTCUT + "remover")
+    assert done.returncode == 0, done.stdout + done.stderr
+    assert conf.read_bytes() == original
+    assert (machine.data / "moonraker.asvc").read_bytes() == b"klipper\n"
+    assert not list((machine.home / "units").iterdir())
+
+
+def test_uninstaller_also_takes_the_button_away(machine):
+    conf, original = prepare_shortcut(machine)
+    run(machine, SHORTCUT + "instalar")
+    assert run(machine, UNINSTALL).returncode == 0
+    assert conf.read_bytes() == original
+
+
 def test_a_section_after_the_block_survives(machine):
     conf = machine.data / "config/moonraker.conf"
     conf.write_bytes(f"[a]\nx: 1\n\n{BLOCK}\n[b]\ny: 2\n".encode())

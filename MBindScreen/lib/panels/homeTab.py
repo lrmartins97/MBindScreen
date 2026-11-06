@@ -71,7 +71,7 @@ class HomeTab(QtWidgets.QWidget):
             column.addWidget(widget)
         column.addStretch()
         hero.addWidget(bar)
-        hero.addLayout(column, 3)
+        hero.addLayout(column, 1)
         photo = label()
         photo.setPixmap(
             QtGui.QPixmap(str(PHOTO)).scaledToHeight(
@@ -79,7 +79,7 @@ class HomeTab(QtWidgets.QWidget):
             )
         )
         photo.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        hero.addWidget(photo, 2)
+        hero.addWidget(photo, 1)
         root.addLayout(hero, 1)
 
         row = QtWidgets.QHBoxLayout()

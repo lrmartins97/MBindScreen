@@ -3,13 +3,14 @@ from __future__ import annotations
 
 from lib.i18n import tr
 import datetime
+import hashlib
 import logging
 import os
 import sys
 
 from lib import screenSwitch
 from lib import i18n
-from lib.panels.widgets.dialogs import choose, confirm
+from lib.panels.widgets.dialogs import choose, confirm, keyboard
 from lib.panels.networkPage import HotspotPage, NetworkPage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
@@ -27,6 +28,7 @@ from PyQt6 import QtWidgets
 logger = logging.getLogger(__name__)
 OWN_UPDATE_NAME = "MBindScreen"
 MENU_COLUMNS = 2
+MINIMUM_CODE = 4
 
 
 def update_available(entry: dict) -> bool:
@@ -254,6 +256,12 @@ class RestartPage(SubPage):
             widget.setEnabled(not self.printer.is_printing)
 
 
+def developer_text(on: bool) -> str:
+    if on:
+        return tr("Ativo. Toca para sair.")
+    return tr("Código para mudar de ecrã, atualizar e reiniciar.")
+
+
 def restart_screen() -> None:
     """The same process starts again, under the same service, in the new language."""
     logger.info("Restarting the screen")
@@ -261,16 +269,20 @@ def restart_screen() -> None:
 
 
 class SettingsTab(QtWidgets.QStackedWidget):
-    def __init__(self, printer, api) -> None:
+    def __init__(self, printer, api, developer_code: str = "") -> None:
         super().__init__()
+        self.developer_code = developer_code
+        self.developer_on = False
         self.main = QtWidgets.QWidget()
         root = QtWidgets.QVBoxLayout(self.main)
         root.setContentsMargins(14, 12, 14, 12)
         root.setSpacing(8)
         root.addWidget(label(tr("Definições"), "pageTitle"))
-        grid = QtWidgets.QGridLayout()
-        grid.setSpacing(8)
-        root.addLayout(grid)
+        self.grid = QtWidgets.QGridLayout()
+        self.grid.setSpacing(8)
+        self.grid.setColumnStretch(0, 1)
+        self.grid.setColumnStretch(1, 1)
+        root.addLayout(self.grid)
         self.addWidget(self.main)
         self.messages = MessagesPage(printer, self.reset)
         back_to_network = lambda: self.setCurrentWidget(self.network)  # noqa: E731
@@ -284,26 +296,65 @@ class SettingsTab(QtWidgets.QStackedWidget):
         )
         self.addWidget(self.wifi)
         self.addWidget(self.hotspot)
+        updates = UpdatesPage(printer, api, self.reset)
+        screen = ScreenPage(printer, api, self.reset)
+        restart = RestartPage(printer, api, self.reset)
+        self.developer_pages = (updates, screen, restart)
         pages = (
             ("bell", tr("Mensagens"), tr("Avisos e consola do Klipper."), self.messages),
             ("wifi", tr("Rede"), tr("Ethernet, Wi-Fi e hotspot."), self.network),
             ("info", tr("Sistema"), tr("Versões e endereço de rede."), SystemPage(api, self.reset)),
             ("update", tr("Atualizações"), tr("Estado do que o Moonraker atualiza."),
-             UpdatesPage(printer, api, self.reset)),
+             updates),
             ("screen", tr("Ecrã"), tr("Mudar para o KlipperScreen."),
-             ScreenPage(printer, api, self.reset)),
+             screen),
             ("power", tr("Reiniciar"), tr("Klipper, firmware e computador."),
-             RestartPage(printer, api, self.reset)),
+             restart),
         )
-        for index, (icon_name, title, description, page) in enumerate(pages):
+        self.rows = {}
+        for icon_name, title, description, page in pages:
             self.addWidget(page)
             row = ListRow(icon_name, title, description)
             row.clicked.connect(lambda p=page: self.setCurrentWidget(p))
-            grid.addWidget(row, index // MENU_COLUMNS, index % MENU_COLUMNS)
+            self.rows[page] = row
         self.language = ListRow("language", tr("Idioma"), i18n.LANGUAGES[i18n.language()])
         self.language.clicked.connect(self._choose_language)
-        grid.addWidget(self.language, len(pages) // MENU_COLUMNS, len(pages) % MENU_COLUMNS)
+        self.developer = ListRow(
+            "settings", tr("Modo de programador"), developer_text(False)
+        )
+        self.developer.clicked.connect(self._toggle_developer)
+        self.developer_rows = [self.rows[p] for p in self.developer_pages]
         root.addStretch()
+        self._arrange()
+
+    def _arrange(self) -> None:
+        """Rows hidden from everyday use leave no holes in the grid."""
+        rows = [row for row in self.rows.values()
+                if self.developer_on or row not in self.developer_rows]
+        for row in self.rows.values():
+            row.setVisible(row in rows)
+        for index, row in enumerate([*rows, self.language, self.developer]):
+            self.grid.addWidget(row, index // MENU_COLUMNS, index % MENU_COLUMNS)
+
+    def _toggle_developer(self) -> None:
+        if self.developer_on:
+            self._set_developer(False)
+            return
+        keyboard(self, tr("Código de programador"), self._check_code, MINIMUM_CODE, "OK")
+
+    def _check_code(self, code: str) -> None:
+        digest = hashlib.sha256(code.encode("utf-8")).hexdigest()
+        if digest == self.developer_code:
+            self._set_developer(True)
+        else:
+            logger.info("Developer mode: wrong code")
+            self.developer.description.setText(tr("Código errado."))
+
+    def _set_developer(self, on: bool) -> None:
+        logger.info("Developer mode: %s", on)
+        self.developer_on = on
+        self.developer.description.setText(developer_text(on))
+        self._arrange()
 
     def _choose_language(self) -> None:
         options = [(name, code) for code, name in i18n.LANGUAGES.items()]

@@ -72,6 +72,19 @@ Por ordem, da mais simples para a mais drástica:
 3. Por SSH: `bash ~/MBindScreen/scripts/experimentar.sh parar`
 4. Reiniciar a máquina: `sudo reboot`, ou desligar e ligar.
 
+## Saltar do KlipperScreen para este ecrã sem linha de comandos
+
+Acrescenta o botão **Mais > MBindScreen** ao KlipperScreen. O arranque não muda: a máquina
+continua a ligar no KlipperScreen.
+
+```
+bash ~/MBindScreen/scripts/atalho-ecra.sh instalar
+```
+
+Reinicia o Moonraker e o KlipperScreen, e altera o `KlipperScreen.conf`, que está no git da
+configuração. Para desfazer: `atalho-ecra.sh remover`. Com este botão, os comandos atuam
+mesmo na máquina. Para voltar ao KlipperScreen: Definições > Modo de programador > Ecrã.
+
 ## Ver o que correu mal
 
 - Log: `~/printer_data/logs/MBindScreen.log`, também no Mainsail.

@@ -65,7 +65,7 @@ class MainWindow(QtWidgets.QWidget):
         self.syringes = SyringeTab(self.printer, self.api, self.runner)
         self.cameras = CamerasTab(self.api)
         self.calibration = CalibrationTab(self.printer, self.api, self.runner)
-        self.settings = SettingsTab(self.printer, self.api)
+        self.settings = SettingsTab(self.printer, self.api, config.developer_code)
         self.printing = PrintTab(self.printer, self.api)
         self.files = FilesPage(self.printer, self.api, lambda: self.goto(HOME))
         self.stack = QtWidgets.QStackedWidget()
