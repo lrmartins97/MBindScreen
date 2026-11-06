@@ -7,6 +7,7 @@ without a terminal: it must never reach the log.
 from __future__ import annotations
 
 import dataclasses
+import json
 import logging
 import typing
 
@@ -14,6 +15,9 @@ from PyQt6 import QtCore
 
 logger = logging.getLogger(__name__)
 NMCLI = "nmcli"
+TAILSCALE = "tailscale"
+TAILSCALE_STATUS = ("status", "--json")
+TAILSCALE_ON = "Running"
 TIMEOUT_MS = 45000  # a connection attempt can take this long
 WIFI_PROFILE = "802-11-wireless"
 OPEN_NETWORK = ("", "--")
@@ -45,6 +49,24 @@ class Device:
     kind: str
     state: str
     connection: str
+
+
+@dataclasses.dataclass(frozen=True)
+class RemoteAccess:
+    state: str
+    address: str
+
+
+def parse_tailscale(output: str) -> typing.Optional[RemoteAccess]:
+    """None if the answer is not what `tailscale status --json` gives."""
+    try:
+        status = json.loads(output)
+        state = status["BackendState"]
+    except (ValueError, KeyError, TypeError):
+        return None
+    addresses = (status.get("Self") or {}).get("TailscaleIPs") or []
+    ipv4 = [address for address in addresses if ":" not in address]
+    return RemoteAccess(state, ipv4[0] if ipv4 else "")
 
 
 def split_fields(line: str) -> list[str]:
@@ -128,7 +150,9 @@ def hotspot_args(device: str, ssid: str, password: str) -> tuple[str, ...]:
 
 
 class Nmcli(QtCore.QObject):
-    def run(self, args: typing.Sequence[str], callback: Callback) -> None:
+    def run(
+        self, args: typing.Sequence[str], callback: Callback, program: str = NMCLI
+    ) -> None:
         """``callback(ok, output)`` always runs once. ``args`` may hold a password."""
         process = QtCore.QProcess(self)
         timer = QtCore.QTimer(process)
@@ -150,4 +174,4 @@ class Nmcli(QtCore.QObject):
             lambda error: error == QtCore.QProcess.ProcessError.FailedToStart and finish(False)
         )
         timer.start(TIMEOUT_MS)
-        process.start(NMCLI, list(args))
+        process.start(program, list(args))

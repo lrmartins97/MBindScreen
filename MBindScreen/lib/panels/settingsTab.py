@@ -11,7 +11,7 @@ import sys
 from lib import screenSwitch
 from lib import i18n
 from lib.panels.widgets.dialogs import choose, confirm, keyboard
-from lib.panels.networkPage import HotspotPage, NetworkPage
+from lib.panels.networkPage import HotspotPage, NetworkPage, RemotePage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
 from lib.utils.widgets import (
@@ -292,10 +292,13 @@ class SettingsTab(QtWidgets.QStackedWidget):
             api,
             lambda: self.setCurrentWidget(self.wifi),
             lambda: self.setCurrentWidget(self.hotspot),
+            lambda: self.setCurrentWidget(self.remote),
             self.reset,
         )
+        self.remote = RemotePage(api, back_to_network)
         self.addWidget(self.wifi)
         self.addWidget(self.hotspot)
+        self.addWidget(self.remote)
         updates = UpdatesPage(printer, api, self.reset)
         screen = ScreenPage(printer, api, self.reset)
         restart = RestartPage(printer, api, self.reset)
@@ -354,6 +357,7 @@ class SettingsTab(QtWidgets.QStackedWidget):
         logger.info("Developer mode: %s", on)
         self.developer_on = on
         self.developer.description.setText(developer_text(on))
+        self.network.set_developer(on)
         self._arrange()
 
     def _choose_language(self) -> None:

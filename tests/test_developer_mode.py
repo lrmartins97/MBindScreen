@@ -64,3 +64,76 @@ def test_the_code_itself_is_not_in_the_source():
     from configfile import DEFAULT_DEVELOPER_CODE
 
     assert len(DEFAULT_DEVELOPER_CODE) == 64
+
+
+STATUS = (
+    '{"BackendState": "Running", "Self": {"TailscaleIPs": ["100.64.0.9", "fd7a::9"], '
+    '"Online": true}}'
+)
+
+
+class FakeTailscale:
+    def __init__(self):
+        self.calls = []
+        self.output = STATUS
+        self.ok = True
+
+    def run(self, args, callback, program="nmcli"):
+        self.calls.append((program, *args))
+        callback(self.ok, self.output if args[0] == "status" else "")
+
+
+@pytest.fixture
+def remote(tab):
+    tab.remote.nmcli = FakeTailscale()
+    tab.setCurrentWidget(tab.remote)
+    return tab.remote
+
+
+def test_tailscale_only_appears_with_developer_mode(tab, window):
+    assert tab.network.remote.isHidden()
+    enter(window, CODE)
+    assert not tab.network.remote.isHidden()
+    tab.developer.clicked.emit()
+    assert tab.network.remote.isHidden()
+
+
+def test_tailscale_shows_its_state_and_address(remote):
+    assert remote.status.text() == "Ligado · 100.64.0.9"
+    assert remote.toggle.text() == "Desligar"
+
+
+def test_turning_tailscale_off_warns_first(remote, window):
+    remote.toggle.click()
+    assert ("tailscale", "down") not in remote.nmcli.calls
+    click_button(top_dialog(window), "Desligar")
+    assert ("tailscale", "down") in remote.nmcli.calls
+
+
+def test_turning_tailscale_on_needs_no_warning(remote):
+    remote.nmcli.output = '{"BackendState": "Stopped", "Self": {}}'
+    remote.refresh()
+    assert remote.status.text() == "Desligado"
+    remote.toggle.click()
+    assert ("tailscale", "up") in remote.nmcli.calls
+
+
+def test_refused_change_says_what_to_authorise(remote, window):
+    remote.nmcli.ok = False
+    remote.toggle.click()
+    click_button(top_dialog(window), "Desligar")
+    assert "--operator" in remote.note.text()
+
+
+def test_machine_without_tailscale_says_so(remote):
+    remote.nmcli.output = ""
+    remote.refresh()
+    assert remote.status.text() == "Tailscale não disponível"
+    assert not remote.toggle.isEnabled()
+
+
+def test_read_only_trial_does_not_touch_tailscale(remote, api):
+    api.read_only = True
+    remote.toggle.click()
+    assert ("tailscale", "up") not in remote.nmcli.calls
+    assert ("tailscale", "down") not in remote.nmcli.calls

@@ -37,6 +37,10 @@ PATHS = {
         '<circle cx="12" cy="12" r="9"/>'
         '<path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>'
     ),
+    "remote": (
+        '<circle cx="5" cy="12" r="2.5"/><circle cx="19" cy="6" r="2.5"/>'
+        '<circle cx="19" cy="18" r="2.5"/><path d="M7.3 11l9.4-4M7.3 13l9.4 4"/>'
+    ),
     "calibrate": (
         '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'
         '<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'

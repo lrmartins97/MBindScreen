@@ -43,7 +43,7 @@ def wifi_text(device, address: str) -> str:
 
 
 class NetworkPage(SubPage):
-    def __init__(self, api, open_wifi, open_hotspot, back, nmcli=None) -> None:
+    def __init__(self, api, open_wifi, open_hotspot, open_remote, back, nmcli=None) -> None:
         super().__init__(tr("Rede"), back)
         self.api = api
         self.nmcli = nmcli or wifi.Nmcli(self)
@@ -53,13 +53,19 @@ class NetworkPage(SubPage):
         self.ethernet = ListRow("ethernet", "Ethernet", tr("A ler..."))
         self.wifi = ListRow("wifi", "Wi-Fi", tr("A ler..."))
         self.hotspot = ListRow("hotspot", "Hotspot", tr("A ler..."))
+        self.remote = ListRow("remote", "Tailscale", tr("Acesso remoto."))
+        self.remote.clicked.connect(open_remote)
+        self.remote.hide()  # developer mode only
         self.ethernet.clicked.connect(self._ethernet_action)
         self.wifi.clicked.connect(open_wifi)
         self.hotspot.clicked.connect(open_hotspot)
-        for row in (self.ethernet, self.wifi, self.hotspot):
+        for row in (self.ethernet, self.wifi, self.hotspot, self.remote):
             self.body.addWidget(row)
         self.body.addWidget(self.note)
         self.body.addStretch()
+
+    def set_developer(self, on: bool) -> None:
+        self.remote.setVisible(on)
 
     def showEvent(self, event) -> None:
         self.refresh()
@@ -112,6 +118,73 @@ class NetworkPage(SubPage):
             self.refresh()
 
         self.nmcli.run(("device", verb, name), done)
+
+
+class RemotePage(SubPage):
+    """Tailscale, for the people who look after the machine, not for its everyday user."""
+
+    def __init__(self, api, back, nmcli=None) -> None:
+        super().__init__("Tailscale", back)
+        self.api = api
+        self.nmcli = nmcli or wifi.Nmcli(self)
+        self.access = None
+        self.status = label("", "value")
+        self.note = label("", "dim")
+        self.note.setWordWrap(True)
+        self.toggle = button(tr("Ligar"), self._toggle, "accent", 58)
+        for widget in (self.status, self.note, self.toggle):
+            self.body.addWidget(widget)
+        self.body.addStretch()
+
+    def showEvent(self, event) -> None:
+        self.refresh()
+        super().showEvent(event)
+
+    def refresh(self) -> None:
+        self.status.setText(tr("A ler..."))
+        self.nmcli.run(wifi.TAILSCALE_STATUS, self._on_status, wifi.TAILSCALE)
+
+    def _on_status(self, _ok: bool, output: str) -> None:
+        self.access = wifi.parse_tailscale(output)
+        self.toggle.setEnabled(self.access is not None)
+        if self.access is None:
+            self.status.setText(tr("Tailscale não disponível"))
+            return
+        on = self.access.state == wifi.TAILSCALE_ON
+        self.toggle.setText(tr("Desligar") if on else tr("Ligar"))
+        self.status.setText(
+            tr("Ligado · {}", self.access.address) if on
+            else tr("Desligado") if self.access.state == "Stopped"
+            else tr("Por autenticar")
+        )
+
+    def _toggle(self) -> None:
+        if is_read_only(self.api):
+            self.note.setText(READ_ONLY_TEXT)
+            return
+        self.note.setText("")
+        if self.access is not None and self.access.state == wifi.TAILSCALE_ON:
+            confirm(
+                self,
+                tr("Desligar o Tailscale? Perde-se o acesso remoto a esta máquina."),
+                lambda: self._run("down"),
+                tr("Desligar"),
+            )
+        else:
+            self._run("up")
+
+    def _run(self, verb: str) -> None:
+        logger.info("Tailscale %s", verb)
+
+        def done(ok: bool, _output: str) -> None:
+            if not ok:
+                self.note.setText(tr(
+                    "Não foi possível. Sem password, é preciso autorizar uma vez por SSH: "
+                    "sudo tailscale set --operator=$USER"
+                ))
+            self.refresh()
+
+        self.nmcli.run((verb,), done, wifi.TAILSCALE)
 
 
 class HotspotPage(SubPage):

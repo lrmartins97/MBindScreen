@@ -68,7 +68,8 @@ python MBindScreen/MBindScreen.py --simulate
 
 ## Modo de programador
 
-Definições > Modo de programador pede um código e mostra Ecrã, Atualizações e Reiniciar.
+Definições > Modo de programador pede um código e mostra Ecrã, Atualizações, Reiniciar e,
+em Rede, o Tailscale, que um cliente normal não precisa de ver.
 O repositório guarda só o SHA-256 do código; cada máquina pode ter o seu em
 `[screen] developer_code` no `MBindScreen.cfg`. Fecha sozinho quando o ecrã reinicia.
 O código não está escrito em nenhum ficheiro deste repositório.

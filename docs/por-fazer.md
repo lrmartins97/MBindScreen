@@ -22,6 +22,7 @@ toque, as câmaras e a calibração X/Y manual funcionam. O estado atual está n
 
 ## Funcionalidades em falta
 
+- **Tailscale:** só mostra o estado e liga ou desliga. O login faz-se por SSH.
 - **Rede:** ao contrário do BlocksScreen, não há VLAN, IP fixo nem QR code do hotspot.
 - **klipper-hotspot:** o ecrã fala com o NetworkManager diretamente. Se esse projeto for
   instalado nas máquinas, passar a usar as macros `HOTSPOT_*`, para haver um só perfil.

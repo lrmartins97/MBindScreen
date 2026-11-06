@@ -238,6 +238,15 @@ ENGLISH_TEXT = {
     "Definições": "Settings",
     "Idioma": "Language",
     "Modo de programador": "Developer mode",
+    "Acesso remoto.": "Remote access.",
+    "Tailscale não disponível": "Tailscale not available",
+    "Por autenticar": "Not logged in",
+    "Desligar o Tailscale? Perde-se o acesso remoto a esta máquina.":
+        "Turn Tailscale off? Remote access to this machine is lost.",
+    "Não foi possível. Sem password, é preciso autorizar uma vez por SSH: "
+    "sudo tailscale set --operator=$USER":
+        "Could not do it. To work without a password, authorise it once over SSH: "
+        "sudo tailscale set --operator=$USER",
     "Código de programador": "Developer code",
     "Código para mudar de ecrã, atualizar e reiniciar.":
         "Code to switch screens, update and restart.",
