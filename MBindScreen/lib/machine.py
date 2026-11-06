@@ -96,6 +96,23 @@ def cameras_from_webcams(webcams: typing.Iterable[dict]) -> list[Camera]:
     return sorted(cameras, key=lambda camera: (camera.is_analysis, camera.name.lower()))
 
 
+MAIN_BOARD = "mcu"
+BOARD_PREFIX = "mcu "
+
+
+def board_objects(objects: typing.Iterable[str]) -> list[str]:
+    """Klipper objects that are a board: the main one first."""
+    return sorted(
+        (o for o in objects if o == MAIN_BOARD or o.startswith(BOARD_PREFIX)),
+        key=lambda name: (name != MAIN_BOARD, name),
+    )
+
+
+def board_chip(constants: dict) -> str:
+    """stm32h723xx becomes STM32H723."""
+    return str(constants.get("MCU", "?")).upper().removesuffix("XX")
+
+
 def syringe_area(diameter: float) -> float:
     """Plunger area in mm2."""
     return math.pi * (diameter / 2) ** 2
@@ -107,10 +124,8 @@ def plunger_volume(mm: float, diameter: float) -> float:
 
 
 def format_volume(mm3: float) -> str:
-    """Volume for the screen: mL from 1000 mm3 up (1 mm3 = 1 uL)."""
-    if mm3 >= 1000:
-        return f"{mm3 / 1000:.2f} mL"
-    return f"{mm3:.0f} µL"
+    """Volume for the screen, always in mL (1000 mm3 = 1 mL)."""
+    return f"{mm3 / 1000:.3f} mL"
 
 
 def format_time(seconds: typing.Optional[float]) -> str:

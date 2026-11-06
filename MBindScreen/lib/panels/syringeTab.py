@@ -16,19 +16,21 @@ from lib.utils.widgets import (
     set_card_active,
     status_chip,
 )
-from PyQt6 import QtWidgets
+from PyQt6 import QtCore, QtWidgets
 
 DISTANCES = (0.1, 0.5, 1, 5)  # mm of plunger travel
 SPEEDS = (0.1, 0.2, 0.5, 1)  # mm/s of plunger travel
 
 
 class SyringePanel(HoldArea):
-    """A touch on the card selects this head; holding it also opens its temperature."""
+    """A touch on the card selects this head. Touching the temperature, or holding the
+    card anywhere, also opens the temperature of this head."""
 
     def __init__(self, tool: int, tab: "SyringeTab") -> None:
         super().__init__("card")
         self.tool_index, self.tab = tool, tab
-        self.clicked.connect(self._select)
+        self._pressed_at = QtCore.QPoint()
+        self.clicked.connect(self._on_touch)
         self.held.connect(self._edit_temperature)
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(14, 10, 14, 12)
@@ -50,7 +52,7 @@ class SyringePanel(HoldArea):
         temp_layout.addStretch()
         temp_layout.addWidget(self.target)
         layout.addWidget(self.temp_area)
-        layout.addWidget(label(tr("Manter premido: temperatura"), "dim"))
+        layout.addWidget(label(tr("Toca na temperatura para a mudar"), "dim"))
 
         self.material = button("—", self._pick_material, height=44)
         layout.addWidget(self.material)
@@ -63,6 +65,16 @@ class SyringePanel(HoldArea):
         layout.addLayout(moves)
         self.clean = button(tr("Limpar bico"), self._clean, height=44)
         layout.addWidget(self.clean)
+
+    def mousePressEvent(self, event) -> None:
+        self._pressed_at = event.position().toPoint()
+        super().mousePressEvent(event)
+
+    def _on_touch(self) -> None:
+        if self.temp_area.geometry().contains(self._pressed_at):
+            self._edit_temperature()
+        else:
+            self._select()
 
     def _select(self) -> None:
         select_tool(self.tab.printer, self.tab.api, self.tool_index)

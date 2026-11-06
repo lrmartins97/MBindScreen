@@ -15,7 +15,7 @@ from lib.panels.mainWindow import CONTROL, HOME, SETTINGS, SYRINGES, MainWindow
 from lib.panels.widgets.dialogs import Scrim
 from lib.utils.theme import QSS
 from lib.utils.widgets import HOLD_MS
-from PyQt6 import QtCore
+from PyQt6 import QtCore, QtWidgets
 
 
 def test_starts_connected_on_home(window):
@@ -372,5 +372,36 @@ def test_cards_of_the_main_page_select_the_head(window, api, qtbot):
 
 def test_holding_a_card_of_the_main_page_opens_its_temperature(window, api):
     window.home.tools[1].held.emit()
+    assert api.sent[-1] == "SERINGA_T1"
+    assert top_dialog(window).isVisible()
+
+
+def test_system_page_lists_the_computer_and_every_board(window, qtbot):
+    window.goto(SETTINGS)
+    page = next(p for p in (window.settings.widget(i) for i in range(window.settings.count()))
+                if type(p).__name__ == "SystemPage")
+    window.settings.setCurrentWidget(page)
+    qtbot.waitUntil(lambda: page.column.count() > 3, timeout=1000)
+    texts = [w.text() for w in page.findChildren(QtWidgets.QLabel)]
+    assert "Computador simulado" in texts
+    positions = [texts.index(t) for t in
+                 ("Placa principal", "Placa da cabeça T0", "Placa da cabeça T1")]
+    assert positions == sorted(positions)
+    assert "SIM · v0.0.0-simulada" in texts
+
+
+def test_board_names_come_with_the_main_board_first_and_the_chip_short():
+    objects = ["toolhead", "mcu tool_1", "mcu", "mcu tool_0", "mcu_extra"]
+    assert machine.board_objects(objects) == ["mcu", "mcu tool_0", "mcu tool_1"]
+    assert machine.board_chip({"MCU": "stm32h723xx"}) == "STM32H723"
+    assert machine.board_chip({}) == "?"
+
+
+def test_touching_the_temperature_selects_the_head_and_opens_the_keypad(window, api, qtbot):
+    window.goto(SYRINGES)
+    panel = window.syringes.panels[1]
+    qtbot.waitExposed(panel)
+    spot = panel.temp_area.geometry().center()
+    qtbot.mouseClick(panel, QtCore.Qt.MouseButton.LeftButton, pos=spot)
     assert api.sent[-1] == "SERINGA_T1"
     assert top_dialog(window).isVisible()

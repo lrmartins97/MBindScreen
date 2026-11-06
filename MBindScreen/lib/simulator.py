@@ -186,8 +186,14 @@ class SimulatedPrinter(QtCore.QObject):
             self.klippy.emit("ready", "")
         elif method == "printer.info":
             return {"hostname": "MBind (simulada)", "software_version": "simulador"}
+        elif method == "printer.objects.list":
+            return {"objects": ["toolhead", "mcu tool_1", "mcu", "mcu tool_0"]}
+        elif method == "printer.objects.query":
+            board = {"mcu_version": "v0.0.0-simulada", "mcu_constants": {"MCU": "simxx"}}
+            return {"status": {name: board for name in params["objects"]}}
         elif method == "machine.system_info":
-            return {"system_info": {"distribution": {"name": "Simulador"}, "network": {
+            return {"system_info": {"cpu_info": {"model": "Computador simulado"},
+                                    "distribution": {"name": "Simulador"}, "network": {
                 "wlan0": {"ip_addresses": [{"family": "ipv4", "address": "192.0.2.50"}]}}}}
         elif method == "machine.update.status":
             return {"version_info": {

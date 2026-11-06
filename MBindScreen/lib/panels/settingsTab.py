@@ -9,7 +9,7 @@ import os
 import sys
 
 from lib import screenSwitch
-from lib import i18n
+from lib import i18n, machine
 from lib.panels.widgets.dialogs import choose, code_pad, confirm
 from lib.panels.networkPage import HotspotPage, NetworkPage, RemotePage
 from lib.panels.wifiPage import WifiPage
@@ -91,6 +91,7 @@ class SystemPage(SubPage):
         clear_layout(self.column)
         self.api.call("printer.info", None, self._printer_info)
         self.api.call("machine.system_info", None, self._system_info)
+        self.api.call("printer.objects.list", None, self._board_list)
         super().showEvent(event)
 
     def _row(self, title: str, value: str) -> None:
@@ -107,6 +108,9 @@ class SystemPage(SubPage):
 
     def _system_info(self, result, _error) -> None:
         info = (result or {}).get("system_info", {})
+        model = info.get("cpu_info", {}).get("model")
+        if model:
+            self._row(tr("Computador"), model)
         distribution = info.get("distribution", {}).get("name")
         if distribution:
             self._row(tr("Sistema"), distribution)
@@ -118,6 +122,17 @@ class SystemPage(SubPage):
             ]
             if addresses:
                 self._row(name, ", ".join(addresses))
+
+    def _board_list(self, result, _error) -> None:
+        boards = machine.board_objects((result or {}).get("objects", []))
+        if boards:
+            fields = {board: ["mcu_version", "mcu_constants"] for board in boards}
+            self.api.call("printer.objects.query", {"objects": fields}, self._boards)
+
+    def _boards(self, result, _error) -> None:
+        status = (result or {}).get("status", {})
+        for board, values in status.items():
+            self._row(board_title(board), board_detail(values))
 
 
 class UpdatesPage(SubPage):
@@ -254,6 +269,20 @@ class RestartPage(SubPage):
     def refresh(self) -> None:
         for widget in self.buttons:
             widget.setEnabled(not self.printer.is_printing)
+
+
+def board_title(board: str) -> str:
+    if board == machine.MAIN_BOARD:
+        return tr("Placa principal")
+    name = board.removeprefix(machine.BOARD_PREFIX)
+    if name.startswith("tool_"):
+        return tr("Placa da cabeça T{}", name.removeprefix("tool_"))
+    return name
+
+
+def board_detail(values: dict) -> str:
+    chip = machine.board_chip(values.get("mcu_constants") or {})
+    return f"{chip} · {values.get('mcu_version', '?')}"
 
 
 def developer_text(on: bool) -> str:

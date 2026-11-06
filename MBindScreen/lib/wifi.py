@@ -30,7 +30,9 @@ HOTSPOT_CHANNEL = "6"
 DEVICES = ("-t", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status")
 RADIO = ("radio", "wifi")
 PROFILES = ("-t", "-f", "NAME,TYPE", "connection", "show")
-NETWORKS = ("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "device", "wifi", "list")
+_NETWORKS = ("-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY", "device", "wifi", "list", "--rescan")
+NETWORKS_KNOWN = (*_NETWORKS, "no")  # instant: what NetworkManager already saw
+NETWORKS_FRESH = (*_NETWORKS, "yes")  # takes seconds: a new scan
 
 Callback = typing.Callable[[bool, str], None]
 

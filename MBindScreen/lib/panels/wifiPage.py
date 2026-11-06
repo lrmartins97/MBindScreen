@@ -39,6 +39,7 @@ class WifiPage(SubPage):
         self.rows: dict[str, ListRow] = {}
         self.address = ""
         self._loading = False
+        self._scanning = False
         self._pending: list[str] = []
         self.radio_on = True
         self.radio = button(tr("Desligar Wi-Fi"), self._toggle_radio, height=46)
@@ -99,7 +100,7 @@ class WifiPage(SubPage):
 
     def _next_profile(self) -> None:
         if not self._pending:
-            self.nmcli.run(wifi.NETWORKS, self._on_networks)
+            self.nmcli.run(wifi.NETWORKS_KNOWN, self._on_networks)
             return
         name = self._pending.pop()
 
@@ -111,10 +112,24 @@ class WifiPage(SubPage):
         self.nmcli.run(wifi.profile_ssid_args(name), done)
 
     def _on_networks(self, ok: bool, output: str) -> None:
+        """The list appears at once; a scan then completes it."""
         if not ok:
             self._unavailable()
             return
         self._loading = False
+        self._show_networks(output)
+        if not self._scanning:
+            self._scanning = True
+            self.scan.setEnabled(False)
+            self.nmcli.run(wifi.NETWORKS_FRESH, self._on_scan)
+
+    def _on_scan(self, ok: bool, output: str) -> None:
+        self._scanning = False
+        self.scan.setEnabled(True)
+        if ok and not self._loading and self.radio_on:
+            self._show_networks(output)
+
+    def _show_networks(self, output: str) -> None:
         self.networks = wifi.parse_networks(output)
         current = next((n for n in self.networks if n.in_use), None)
         if current:

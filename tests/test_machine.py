@@ -10,7 +10,7 @@ def test_syringe_volume_uses_the_15_mm_barrel():
 
 
 @pytest.mark.parametrize(
-    "mm3, text", [(88.4, "88 µL"), (176.7, "177 µL"), (883.6, "884 µL"), (1767, "1.77 mL")]
+    "mm3, text", [(88.4, "0.088 mL"), (176.7, "0.177 mL"), (883.6, "0.884 mL"), (1767, "1.767 mL")]
 )
 def test_format_volume(mm3, text):
     assert machine.format_volume(mm3) == text

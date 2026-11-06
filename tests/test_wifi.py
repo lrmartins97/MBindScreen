@@ -29,6 +29,7 @@ class FakeNmcli:
         self.devices = DEVICES
         self.radio = "enabled\n"
         self.hotspot_name = ""
+        self.fresh = NETWORKS
 
     def run(self, args, callback):
         self.calls.append(tuple(args))
@@ -47,6 +48,8 @@ class FakeNmcli:
             answer = "Telefone\n"
         elif "connection show" in key:
             answer = PROFILES
+        elif "--rescan yes" in key:
+            answer = self.fresh
         elif "wifi list" in key:
             answer = NETWORKS
         else:
@@ -71,6 +74,29 @@ def test_networks_merge_access_points_and_put_the_current_first():
     assert [n.ssid for n in networks] == ["Oficina", "Cafe:Livre", "Telefone", "Vizinho"]
     assert networks[0].in_use and networks[0].signal == 71
     assert not networks[1].secured
+
+
+def test_known_networks_appear_first_and_a_scan_then_adds_the_new_ones(page):
+    lists = [call for call in page.fake.calls if "list" in call]
+    assert [call[-1] for call in lists] == ["no", "yes"]
+    page.fake.fresh = NETWORKS + " :Nova:80:WPA2\n"
+    page.refresh()
+    assert "Nova" in page.rows
+
+
+def test_the_search_button_waits_for_the_scan(page):
+    results = []
+    page.fake.run = lambda args, callback: results.append((args, callback))
+    page._on_networks(True, NETWORKS)
+    assert not page.scan.isEnabled()
+    results[-1][1](True, NETWORKS)
+    assert page.scan.isEnabled()
+
+
+def test_a_failed_scan_keeps_the_list_already_shown(page):
+    page.fake.fail.add("--rescan yes")
+    page.refresh()
+    assert "Vizinho" in page.rows
 
 
 def test_page_shows_the_current_network_and_address(page):
