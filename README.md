@@ -1,6 +1,6 @@
 # MBindScreen
 
-Ecrã tátil da M-BIND (IDEX de seringas). Tema claro em branco e azul-bebé, organização
+Ecrã tátil da M-BIND (IDEX de seringas). Tema claro em branco e azul Blocks, organização
 do BlocksScreen, e feito para esta máquina: duas seringas, sem filamento, sem cama
 aquecida. Fala com o Klipper pelo Moonraker e **corre ao lado do KlipperScreen**: dá
 para saltar entre os dois a qualquer momento.

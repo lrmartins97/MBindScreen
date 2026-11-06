@@ -14,7 +14,7 @@ from PyQt6 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
 TICK_MS = 200
-CAMERA_CENTER = (22.0, 113.0)  # camera_x, camera_y in impressao/troca_ferramenta.cfg
+CAMERA_CENTER = (30.0, 100.0)  # invented: real machines have their own
 PIXELS_PER_MM = 40.0
 CAMERA_START_OFFSET = {0: (0.6, -0.4), 1: (-0.9, 0.5)}
 PRINT_SECONDS = 600.0
@@ -57,7 +57,7 @@ class SimulatedPrinter(QtCore.QObject):
             "extruder": {"temperature": 24.0, "target": 0.0, "power": 0.0},
             "extruder1": {"temperature": 24.5, "target": 0.0, "power": 0.0},
             "toolhead": {"homed_axes": "", "position": [0, 0, 0, 0], "extruder": "extruder",
-                         "axis_minimum": [-78, -4, -10, 0], "axis_maximum": [110, 118.5, 30, 0]},
+                         "axis_minimum": [-80, -5, -10, 0], "axis_maximum": [110, 120, 30, 0]},
             "dual_carriage": {"carriage_0": "PRIMARY", "carriage_1": "INACTIVE"},
             "gcode_move": {"homing_origin": [0, 0, 0, 0], "gcode_position": [0, 0, 0, 0],
                            "speed_factor": 1.0},
@@ -186,7 +186,7 @@ class SimulatedPrinter(QtCore.QObject):
             return {"hostname": "MBind (simulada)", "software_version": "simulador"}
         elif method == "machine.system_info":
             return {"system_info": {"distribution": {"name": "Simulador"}, "network": {
-                "wlan0": {"ip_addresses": [{"family": "ipv4", "address": "192.168.1.50"}]}}}}
+                "wlan0": {"ip_addresses": [{"family": "ipv4", "address": "192.0.2.50"}]}}}}
         elif method == "machine.update.status":
             return {"version_info": {
                 "MBindScreen": {"version": "v0.1.0", "remote_version": "v0.1.1",

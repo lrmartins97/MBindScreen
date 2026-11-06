@@ -1,7 +1,7 @@
 # Experimentar na máquina
 
-Sem instalar nada de permanente. Primeiro confirma qual é a máquina: a M-BIND 1 e a 2 têm
-as duas o hostname `MBind`.
+Sem instalar nada de permanente. Primeiro confirma qual é a máquina: têm todas
+o mesmo hostname.
 
 ## O que isto muda na máquina
 
@@ -19,7 +19,7 @@ sozinho. Se tudo correr mal, **desligar e ligar a máquina volta ao KlipperScree
 ## 1. Preparar (uma vez, por SSH, com a máquina parada)
 
 ```
-ssh blocks@<IP>
+ssh <utilizador>@<IP>
 git clone https://github.com/lrmartins97/MBindScreen.git ~/MBindScreen
 bash ~/MBindScreen/scripts/experimentar.sh preparar
 ```

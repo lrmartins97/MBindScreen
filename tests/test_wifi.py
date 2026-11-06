@@ -1,4 +1,4 @@
-"""Wi-Fi page, with what nmcli really prints on a M-BIND."""
+"""Wi-Fi page: nmcli output in its real format, with invented names."""
 import logging
 
 import pytest
@@ -9,15 +9,15 @@ from lib.panels.networkPage import READ_ONLY_TEXT
 from PyQt6.QtWidgets import QLabel
 
 DEVICES = (
-    "wlan0:wifi:connected:netplan-wlan0-BLOCKS\nlo:loopback:connected (externally):lo\n"
+    "wlan0:wifi:connected:perfil-oficina\nlo:loopback:connected (externally):lo\n"
     "p2p-dev-wlan0:wifi-p2p:disconnected:\neth0:ethernet:unavailable:\n"
 )
 PROFILES = (
-    "netplan-wlan0-BLOCKS:802-11-wireless\nlo:loopback\nnetplan-eth0:802-3-ethernet\n"
-    "Pixel_7831:802-11-wireless\n"
+    "perfil-oficina:802-11-wireless\nlo:loopback\nperfil-cabo:802-3-ethernet\n"
+    "Telefone:802-11-wireless\n"
 )
 NETWORKS = (
-    "*:BLOCKS:71:WPA2\n :BLOCKS:69:WPA2\n :Pixel_7831:40:WPA2\n :Cafe\\:Livre:55:--\n"
+    "*:Oficina:71:WPA2\n :Oficina:69:WPA2\n :Telefone:40:WPA2\n :Cafe\\:Livre:55:--\n"
     " :Vizinho:30:WPA2\n : :20:WPA2\n"
 )
 
@@ -40,11 +40,11 @@ class FakeNmcli:
         elif "show MBind-hotspot" in key:
             answer = self.hotspot_name
         elif "IP4.ADDRESS" in key:
-            answer = "192.168.1.172/24\n"
-        elif "connection show netplan" in key:
-            answer = "BLOCKS\n"
-        elif "connection show Pixel" in key:
-            answer = "Pixel_7831\n"
+            answer = "192.0.2.10/24\n"
+        elif "connection show perfil-oficina" in key:
+            answer = "Oficina\n"
+        elif "connection show Telefone" in key:
+            answer = "Telefone\n"
         elif "connection show" in key:
             answer = PROFILES
         elif "wifi list" in key:
@@ -68,29 +68,29 @@ def page(window, qtbot):
 
 def test_networks_merge_access_points_and_put_the_current_first():
     networks = wifi.parse_networks(NETWORKS)
-    assert [n.ssid for n in networks] == ["BLOCKS", "Cafe:Livre", "Pixel_7831", "Vizinho"]
+    assert [n.ssid for n in networks] == ["Oficina", "Cafe:Livre", "Telefone", "Vizinho"]
     assert networks[0].in_use and networks[0].signal == 71
     assert not networks[1].secured
 
 
 def test_page_shows_the_current_network_and_address(page):
-    assert page.status.text() == "Ligada a BLOCKS · 192.168.1.172"
-    assert "Ligada" in page.rows["BLOCKS"].description.text()
-    assert "Guardada" in page.rows["Pixel_7831"].description.text()
+    assert page.status.text() == "Ligada a Oficina · 192.0.2.10"
+    assert "Ligada" in page.rows["Oficina"].description.text()
+    assert "Guardada" in page.rows["Telefone"].description.text()
     assert "Aberta" in page.rows["Cafe:Livre"].description.text()
 
 
 def test_touching_the_current_network_does_nothing(page):
     calls = len(page.fake.calls)
-    page.rows["BLOCKS"].clicked.emit()
+    page.rows["Oficina"].clicked.emit()
     assert len(page.fake.calls) == calls
 
 
 def test_a_saved_network_joins_with_its_profile_after_a_warning(page, window):
-    page.rows["Pixel_7831"].clicked.emit()
+    page.rows["Telefone"].clicked.emit()
     assert not any("up" in call for call in page.fake.calls)
     click_button(top_dialog(window), "Ligar")
-    assert ("connection", "up", "Pixel_7831") in page.fake.calls
+    assert ("connection", "up", "Telefone") in page.fake.calls
 
 
 def test_an_open_network_needs_no_password(page, window):
@@ -120,7 +120,7 @@ def test_failure_to_join_is_explained_and_the_list_comes_back(page, window):
     page.rows["Cafe:Livre"].clicked.emit()
     click_button(top_dialog(window), "Ligar")
     assert "Não foi possível ligar a Cafe:Livre" in page.note.text()
-    assert page.status.text().startswith("Ligada a BLOCKS")
+    assert page.status.text().startswith("Ligada a Oficina")
 
 
 def test_read_only_trial_never_changes_the_network(page, api):
@@ -160,7 +160,7 @@ def network(window, qtbot):
 
 def test_network_page_shows_the_three_connections(network):
     assert network.network.ethernet.description.text() == "Sem cabo"
-    assert network.network.wifi.description.text() == "Ligado · 192.168.1.172"
+    assert network.network.wifi.description.text() == "Ligado · 192.0.2.10"
     assert network.network.hotspot.description.text() == "Desligado"
 
 
@@ -222,7 +222,7 @@ def test_saved_hotspot_starts_with_a_warning_and_stops(network, window):
     hotspot.toggle.click()
     click_button(top_dialog(window), "Ativar")
     assert ("connection", "up", wifi.HOTSPOT) in network.fake.calls
-    network.fake.devices = DEVICES.replace("netplan-wlan0-BLOCKS", wifi.HOTSPOT)
+    network.fake.devices = DEVICES.replace("perfil-oficina", wifi.HOTSPOT)
     hotspot.refresh()
     assert hotspot.status.text().startswith("Ativo: M-BIND")
     assert network.network.hotspot.isEnabled()
