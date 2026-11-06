@@ -13,7 +13,7 @@ MACHINE_CONFIG = pathlib.Path.home() / "printer_data" / "config" / "MBindScreen.
 # Same camera and same snapshot as NozzleSight ([ktamv] in calibracao/camara.cfg).
 DEFAULT_CALIBRATION_CAMERA = "/webcam2/snapshot?max_delay=0"
 # SHA-256 of the developer mode code. Each machine can have its own in MBindScreen.cfg.
-DEFAULT_DEVELOPER_CODE = "1112c695b7e5eab323c59750744ad57ac78c2d64718251f710e5a3a881819e27"
+DEFAULT_DEVELOPER_CODE = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
 
 
 @dataclasses.dataclass(frozen=True)
