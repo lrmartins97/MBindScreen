@@ -113,6 +113,10 @@ em execução, e `ver`/`usar` com o ecrã ligado não fazem nada.
 - **Cada pixel conta:** a janela não pode passar dos 480 px, com ou sem a faixa do modo
   de experiência (24 px), senão corta o fundo do ecrã, incluindo a emergência.
   `test_every_page_fits_the_screen` garante-o.
+- **`OnFailure` e paragens:** o `xinit` sai com 1 ao ser parado. Sem `SuccessExitStatus=1`,
+  um `restart` acionava o `OnFailure` e arrancava o KlipperScreen a meio, o que deixou um
+  `Xorg` órfão e nenhum ecrã. Saída: reiniciar a máquina. Mudar de ecrã não deve ser
+  feito com dois serviços a arrancar no mesmo comando.
 - **Sem cabo de rede, o Wi-Fi é a única ligação:** testar hotspot, desligar o Wi-Fi ou
   mudar de rede corta o SSH, por isso faz-se à frente da máquina.
 - **Passwords nunca vão para o log.** Em `wifi.py` e `wifiPage.py` regista-se só o nome.

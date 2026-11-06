@@ -175,6 +175,13 @@ def test_shortcut_adds_the_update_manager_entry_once(machine):
     assert conf.read_bytes() == b"[server]\nport: 7125\n"
 
 
+def test_stopping_the_screen_is_not_a_failure():
+    """xinit exits with 1 when stopped: OnFailure must not start the other screen then."""
+    unit = (ROOT / "scripts/MBindScreen.service").read_text()
+    assert "OnFailure=KlipperScreen.service" in unit
+    assert "SuccessExitStatus=1" in unit
+
+
 def test_shortcut_twice_adds_one_button(machine):
     conf, _ = prepare_shortcut(machine)
     run(machine, SHORTCUT + "instalar")

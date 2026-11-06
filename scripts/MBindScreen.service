@@ -18,6 +18,10 @@ ConditionPathExists=/dev/tty0
 Type=simple
 Restart=always
 RestartSec=2
+# O xinit sai com 1 quando o servico e' parado. Sem isto, parar ou reiniciar contava como
+# falha e o OnFailure arrancava o KlipperScreen a meio, deixando o X preso e nenhum ecra.
+# Falhas reais continuam a contar: quatro em 2 minutos atingem o StartLimit.
+SuccessExitStatus=1
 User=MBS_USER
 MBS_GROUP_LINE
 WorkingDirectory=MBS_DIR
