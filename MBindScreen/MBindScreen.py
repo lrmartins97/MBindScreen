@@ -41,7 +41,7 @@ def main() -> int:
             config, host=args.host or config.host, port=args.port or config.port
         )
     app = QtWidgets.QApplication(sys.argv)
-    app.setApplicationName("MBindScreen")
+    app.setApplicationName("MBind UI")
     app.setStyleSheet(QSS)
     api = SimulatedPrinter() if args.simulate else None
     window = MainWindow(config, api, args.read_only)

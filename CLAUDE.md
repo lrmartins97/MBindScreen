@@ -1,9 +1,14 @@
-# CLAUDE.md: MBindScreen
+# CLAUDE.md: MBind UI (MBindScreen)
 
 Contexto para o Claude Code continuar o projeto em qualquer PC. O README explica o que
 é e como se organiza; aqui está o que não se vê no código e o que evita estragos.
 
 ## O projeto
+
+**MBind UI** é o nome que se vê (ecrã, KlipperScreen, documentação). `MBindScreen` fica nos
+nomes internos, que não se mudam para não partir máquinas instaladas: repositório, pasta
+`~/MBindScreen`, ambiente, serviço e autorização no Moonraker. No Update Manager é
+`mbind-ui`, porque o Moonraker quer o nome em minúsculas.
 
 Ecrã tátil da M-BIND (IDEX de seringas da Blocks, para farmácia e bioimpressão), em
 PyQt6, a falar com o Klipper pelo Moonraker. Nasceu porque o MyScreen (RF50) é apelativo

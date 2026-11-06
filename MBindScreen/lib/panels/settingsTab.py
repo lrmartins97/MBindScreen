@@ -11,6 +11,7 @@ import sys
 from lib import screenSwitch
 from lib import i18n, machine
 from lib.panels.widgets.dialogs import choose, code_pad, confirm
+from lib.moonrakerComm import UPDATE_NAME
 from lib.panels.networkPage import HotspotPage, NetworkPage, RemotePage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
@@ -26,7 +27,8 @@ from lib.utils.widgets import (
 from PyQt6 import QtWidgets
 
 logger = logging.getLogger(__name__)
-OWN_UPDATE_NAME = "MBindScreen"
+OWN_UPDATE_NAME = UPDATE_NAME
+PRODUCT_NAME = "MBind UI"
 MENU_COLUMNS = 2
 MINIMUM_CODE = 4
 
@@ -200,7 +202,7 @@ class UpdatesPage(SubPage):
             return
         confirm(
             self,
-            tr("Atualizar o MBindScreen? O ecrã reinicia no fim."),
+            tr("Atualizar o MBind UI? O ecrã reinicia no fim."),
             lambda: self.api.call(
                 "machine.update.upgrade", {"name": OWN_UPDATE_NAME}, self._refreshed
             ),

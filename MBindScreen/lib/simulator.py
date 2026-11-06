@@ -197,7 +197,7 @@ class SimulatedPrinter(QtCore.QObject):
                 "wlan0": {"ip_addresses": [{"family": "ipv4", "address": "192.0.2.50"}]}}}}
         elif method == "machine.update.status":
             return {"version_info": {
-                "MBindScreen": {"version": "v0.1.0", "remote_version": "v0.1.1",
+                "mbind-ui": {"version": "v0.1.0", "remote_version": "v0.1.1",
                                 "commits_behind": [{"sha": "abc"}]},
                 "klipper": {"version": "v0.13", "commits_behind": []},
             }}

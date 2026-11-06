@@ -16,6 +16,25 @@ refuse_if_busy() {
     esac
 }
 
+# Entrada do Update Manager do Moonraker. O nome tem de estar em minusculas. O Moonraker
+# nao reinicia o servico, de proposito: a aplicacao sai sozinha quando acaba a atualizacao.
+add_update_manager() {
+    local conf="$HOME/printer_data/config/moonraker.conf" app="$1" env="$2"
+    grep -q "^\[update_manager mbind-ui\]" "$conf" && return 0
+    cat >> "$conf" <<EOF
+
+[update_manager mbind-ui]
+type: git_repo
+path: $app
+origin: $(git -C "$app" remote get-url origin)
+primary_branch: $(git -C "$app" rev-parse --abbrev-ref HEAD)
+virtualenv: $env
+requirements: scripts/requirements.txt
+system_dependencies: scripts/system-dependencies.json
+is_system_service: False
+EOF
+}
+
 installed_packages() {
     dpkg-query -W -f='${db:Status-Abbrev} ${Package}\n' \
         | awk '$1 == "ii" { print $2 }' | LC_ALL=C sort -u

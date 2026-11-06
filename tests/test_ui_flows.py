@@ -255,8 +255,8 @@ def test_boot_file_defaults_to_klipperscreen(tmp_path):
 
 
 def test_only_a_finished_update_of_this_app_restarts_it():
-    assert is_own_update_done({"application": "MBindScreen", "complete": True})
-    assert not is_own_update_done({"application": "MBindScreen", "complete": False})
+    assert is_own_update_done({"application": "mbind-ui", "complete": True})
+    assert not is_own_update_done({"application": "mbind-ui", "complete": False})
     assert not is_own_update_done({"application": "klipper", "complete": True})
 
 

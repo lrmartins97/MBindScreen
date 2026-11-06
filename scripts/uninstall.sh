@@ -45,7 +45,7 @@ remove_services() {
 remove_update_manager_block() {
     local file="$CONFIG_DIR/moonraker.conf" cleaned
     cleaned="$(awk '
-        /^\[update_manager MBindScreen\]/ { skip = 1; blanks = 0; next }
+        /^\[update_manager mbind-ui\]/ { skip = 1; blanks = 0; next }
         skip { if ($0 ~ /^\[/ || $0 ~ /^[[:space:]]*$/) skip = 0; else next }
         /^[[:space:]]*$/ { blanks++; next }
         { while (blanks > 0) { print ""; blanks-- } print }
@@ -72,9 +72,9 @@ remove_from_moonraker() {
         sed -i '/^MBindScreen$/d' "$ASVC"
         changed=yes
     fi
-    if [ -f "$conf" ] && grep -q "^\[update_manager MBindScreen\]" "$conf"; then
-        if in_config_git moonraker.conf | grep -q "update_manager MBindScreen"; then
-            PENDING+=("moonraker.conf: o bloco [update_manager MBindScreen] esta no git da"
+    if [ -f "$conf" ] && grep -q "^\[update_manager mbind-ui\]" "$conf"; then
+        if in_config_git moonraker.conf | grep -q "update_manager mbind-ui"; then
+            PENDING+=("moonraker.conf: o bloco [update_manager mbind-ui] esta no git da"
                       "configuracao e ficou. Tira-o no repositorio m-bind-config.")
         else
             remove_update_manager_block

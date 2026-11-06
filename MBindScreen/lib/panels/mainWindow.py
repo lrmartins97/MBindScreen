@@ -50,7 +50,7 @@ class SleepCover(QtWidgets.QFrame):
 class MainWindow(QtWidgets.QWidget):
     def __init__(self, config, api=None, read_only: bool = False) -> None:
         super().__init__()
-        self.setWindowTitle("MBindScreen")
+        self.setWindowTitle("MBind UI")
         self.config = config
         self.printer = Printer(self)
         self.api = api or MoonWebSocket(config.host, config.port, self, read_only)

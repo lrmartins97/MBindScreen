@@ -21,7 +21,7 @@ PREPARE = (
     'source "$HOME/MBindScreen/scripts/comum.sh"; '
     'install_missing_packages "$FAKE/deps.json"'
 )
-BLOCK = """[update_manager MBindScreen]
+BLOCK = """[update_manager mbind-ui]
 type: git_repo
 path: ~/MBindScreen
 is_system_service: False
@@ -159,6 +159,22 @@ def test_shortcut_adds_the_button_above_the_klipperscreen_section(machine):
     assert "restart moonraker" in calls(machine)
 
 
+def test_shortcut_adds_the_update_manager_entry_once(machine):
+    prepare_shortcut(machine)
+    conf = machine.data / "config/moonraker.conf"
+    conf.write_bytes(b"[server]\nport: 7125\n")
+    git = machine.stubs / "git"
+    git.write_bytes(b'#!/bin/bash\ncase "$*" in *get-url*) echo https://x/y.git;; '
+                    b'*abbrev*) echo main;; *) exit 1;; esac\n')
+    assert run(machine, SHORTCUT + "instalar").returncode == 0
+    run(machine, SHORTCUT + "instalar")
+    text = conf.read_text()
+    assert text.count("[update_manager mbind-ui]") == 1
+    assert "origin: https://x/y.git" in text and "is_system_service: False" in text
+    assert run(machine, SHORTCUT + "remover").returncode == 0
+    assert conf.read_bytes() == b"[server]\nport: 7125\n"
+
+
 def test_shortcut_twice_adds_one_button(machine):
     conf, _ = prepare_shortcut(machine)
     run(machine, SHORTCUT + "instalar")
@@ -238,12 +254,12 @@ def test_refuses_while_the_machine_works(machine, reply):
 
 
 def test_config_in_git_is_left_for_that_repository(machine):
-    (machine.fake / "git-moonraker.conf").write_text("[update_manager MBindScreen]\n")
+    (machine.fake / "git-moonraker.conf").write_text("[update_manager mbind-ui]\n")
     (machine.fake / "git-MBindScreen.cfg").write_text("[screen]\n")
     done = run(machine, UNINSTALL)
     assert done.returncode == 0
     conf = machine.data / "config/moonraker.conf"
-    assert "update_manager MBindScreen" in conf.read_text()
+    assert "update_manager mbind-ui" in conf.read_text()
     assert (machine.data / "config/MBindScreen.cfg").exists()
     assert "m-bind-config" in done.stdout
 

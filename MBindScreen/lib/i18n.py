@@ -25,7 +25,7 @@ ENGLISH_TEXT = {
     "Erro no Klipper": "Klipper error",
     "Klipper desligado": "Klipper disconnected",
     "Interior": "Chamber",
-    "Alinhar bicos": "Nozzle align",
+    "Nozzle Align": "Nozzle Align",
     "Seringa T0": "Syringe T0",
     "Seringa T1": "Syringe T1",
     "Preparar": "Prepare",
@@ -260,8 +260,8 @@ ENGLISH_TEXT = {
     "Sistema": "System",
     "Atualizações": "Updates",
     "A verificar…": "Checking…",
-    "Atualizar o MBindScreen? O ecrã reinicia no fim.":
-        "Update MBindScreen? The screen restarts at the end.",
+    "Atualizar o MBind UI? O ecrã reinicia no fim.":
+        "Update MBind UI? The screen restarts at the end.",
     "Ecrã": "Screen",
     "Mudar para o KlipperScreen? O ecrã fica preto alguns segundos.":
         "Switch to KlipperScreen? The screen goes black for a few seconds.",

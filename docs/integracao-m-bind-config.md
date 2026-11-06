@@ -8,7 +8,7 @@ ficarem iguais, estas alterações devem passar para o repositório `m-bind-conf
 ## moonraker.conf
 
 ```ini
-[update_manager MBindScreen]
+[update_manager mbind-ui]
 type: git_repo
 path: ~/MBindScreen
 origin: https://github.com/lrmartins97/MBindScreen.git
@@ -30,11 +30,11 @@ Acrescentar **antes** da linha `#~# --- Do not edit below this line`:
 
 ```ini
 [menu __main more mbindscreen]
-name: MBindScreen
+name: MBind UI
 icon: settings
 method: machine.services.start
 params: {"service": "MBindScreen"}
-confirm: Mudar para o ecrã MBindScreen?
+confirm: Mudar para o ecrã MBind UI?
 ```
 
 ## instalar.sh

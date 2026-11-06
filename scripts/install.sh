@@ -64,28 +64,6 @@ allow_in_moonraker() {
     fi
 }
 
-add_update_manager() {
-    if grep -q "update_manager MBindScreen" "$MOONRAKER_CONF"; then
-        return
-    fi
-    info "A acrescentar o MBindScreen ao moonraker.conf"
-    local origin branch
-    origin="$(git -C "$APP_DIR" remote get-url origin)"
-    branch="$(git -C "$APP_DIR" rev-parse --abbrev-ref HEAD)"
-    cat >> "$MOONRAKER_CONF" <<EOF
-
-[update_manager MBindScreen]
-type: git_repo
-path: $APP_DIR
-origin: $origin
-primary_branch: $branch
-virtualenv: $ENV_DIR
-requirements: scripts/requirements.txt
-system_dependencies: scripts/system-dependencies.json
-is_system_service: False
-EOF
-}
-
 check_moonraker_services() {
     local info="" attempt
     for attempt in 1 2 3 4 5 6 7 8 9 10; do
@@ -106,7 +84,7 @@ install_packages
 install_virtualenv
 install_services
 allow_in_moonraker
-add_update_manager
+add_update_manager "$APP_DIR" "$ENV_DIR"
 info "A reiniciar o Moonraker"
 sudo systemctl restart moonraker
 check_moonraker_services

@@ -1,8 +1,9 @@
 #!/bin/bash
-# Botao "MBindScreen" no menu Mais do KlipperScreen, para saltar para este ecra sem
-# linha de comandos. O arranque nao muda: a maquina continua a ligar no KlipperScreen.
+# Botao "MBind UI" no menu Mais do KlipperScreen, para saltar para este ecra sem linha de
+# comandos, e entrada no Update Manager do Moonraker. O arranque nao muda: a maquina
+# continua a ligar no KlipperScreen.
 #
-#   atalho-ecra.sh instalar     acrescenta o botao
+#   atalho-ecra.sh instalar     acrescenta os dois (repetir atualiza o botao)
 #   atalho-ecra.sh remover      volta a deixar tudo como estava
 #
 # O Moonraker so' autoriza servicos ja carregados quando arranca. O ficheiro em
@@ -23,17 +24,17 @@ source "$SCRIPT_DIR/comum.sh"
 menu_block() {
     cat <<EOF
 $MENU_SECTION
-name: MBindScreen
+name: MBind UI
 icon: settings
 method: machine.services.start
 params: {"service": "MBindScreen"}
-confirm: Mudar para o ecra MBindScreen?
+confirm: Mudar para o ecra MBind UI?
 
 EOF
 }
 
 add_menu() {
-    grep -qF "$MENU_SECTION" "$SCREEN_CONF" && return 0
+    remove_menu
     local block
     block="$(menu_block; echo x)"
     block="${block%x}"
@@ -58,6 +59,18 @@ remove_menu() {
     rm -f "$SCREEN_CONF.mbind-tmp"
 }
 
+remove_update_manager() {
+    local conf="$HOME/printer_data/config/moonraker.conf" cleaned
+    [ -f "$conf" ] && grep -q "^\[update_manager mbind-ui\]" "$conf" || return 0
+    cleaned="$(awk '
+        /^\[update_manager mbind-ui\]/ { skip = 1; blanks = 0; next }
+        skip { if ($0 ~ /^\[/ || $0 ~ /^[[:space:]]*$/) skip = 0; else next }
+        /^[[:space:]]*$/ { blanks++; next }
+        { while (blanks > 0) { print ""; blanks-- } print }
+    ' "$conf")"
+    printf '%s\n' "$cleaned" > "$conf"
+}
+
 install_shortcut() {
     local group_line=""
     [ -x "$ENV_DIR/bin/python" ] || fail "Corre primeiro: bash $SCRIPT_DIR/experimentar.sh preparar"
@@ -74,9 +87,10 @@ install_shortcut() {
         echo MBindScreen >> "$ASVC"
     }
     add_menu
+    add_update_manager "$APP_DIR" "$ENV_DIR"
     sudo systemctl restart moonraker
     sudo systemctl restart KlipperScreen
-    echo "Pronto: KlipperScreen > Mais > MBindScreen. Voltar: Definicoes, com o codigo."
+    echo "Pronto: KlipperScreen > Mais > MBind UI, e MBind UI no Update Manager (mbind-ui)."
 }
 
 remove_shortcut() {
@@ -86,6 +100,7 @@ remove_shortcut() {
     sudo rmdir "$(dirname "$DROP_IN")" 2> /dev/null || true
     sudo systemctl daemon-reload
     remove_menu
+    remove_update_manager
     [ ! -f "$ASVC" ] || sed -i '/^MBindScreen$/d' "$ASVC"
     sudo systemctl restart moonraker
     sudo systemctl restart KlipperScreen

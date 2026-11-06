@@ -20,6 +20,7 @@ ImageCallback = typing.Callable[[typing.Optional[QtGui.QPixmap]], None]
 RETRY_MS = 2000
 IMAGE_TIMEOUT_MS = 3000
 APP_NAME = "MBindScreen"
+UPDATE_NAME = "mbind-ui"  # section of moonraker.conf: Moonraker wants it in lower case
 
 READ_ONLY_MESSAGE = tr("Modo de experiência: comando não enviado")
 READ_ONLY_ALLOWED = (
@@ -75,7 +76,7 @@ def build_subscription(names: typing.Iterable[str]) -> dict:
 
 def is_own_update_done(response: dict) -> bool:
     """True when Moonraker reports that the update of this app has finished."""
-    return bool(response.get("complete")) and response.get("application") == APP_NAME
+    return bool(response.get("complete")) and response.get("application") == UPDATE_NAME
 
 
 class MoonWebSocket(QtCore.QObject):

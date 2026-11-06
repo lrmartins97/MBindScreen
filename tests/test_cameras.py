@@ -37,10 +37,11 @@ def open_tab(window, api, qtbot):
 def test_cameras_come_with_portuguese_names_and_the_ktamv_view_last():
     cameras = machine.cameras_from_webcams(REAL_LIST)
     assert [c.name for c in cameras] == [
-        "Alinhar bicos", "Interior", "Seringa T0", "Seringa T1", "NozzleSight",
+        "Interior", "Nozzle Align", "Seringa T0", "Seringa T1", "Nozzle Sight",
     ]
     assert cameras[-1].is_analysis and not cameras[0].is_analysis
-    assert cameras[0].flip_vertical and cameras[0].rotation == 180
+    nozzle_align = next(c for c in cameras if c.name == "Nozzle Align")
+    assert nozzle_align.flip_vertical and nozzle_align.rotation == 180
     assert cameras[2].path == "/webcam3/?action=snapshot"
 
 
@@ -74,13 +75,13 @@ def test_tapping_a_camera_in_the_grid_opens_it(window, api, qtbot):
 def test_menu_chooses_each_camera_or_all_of_them(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     assert [c.text() for c in tab.choices] == [
-        "Todas", "Alinhar bicos", "Interior", "Seringa T0", "Seringa T1", "NozzleSight",
+        "Todas", "Interior", "Nozzle Align", "Seringa T0", "Seringa T1", "Nozzle Sight",
     ]
     assert is_highlighted(tab, "Todas")
     click_button(tab, "Interior")
-    assert tab.big_views[1].isVisible() and is_highlighted(tab, "Interior")
+    assert tab.big_views[0].isVisible() and is_highlighted(tab, "Interior")
     click_button(tab, "Seringa T1")  # straight from one camera to another
-    assert tab.big_views[3].isVisible() and not tab.big_views[1].isVisible()
+    assert tab.big_views[3].isVisible() and not tab.big_views[0].isVisible()
     click_button(tab, "Todas")
     assert all(tile.isVisible() for tile in tab.tiles)
     assert is_highlighted(tab, "Todas")
@@ -90,14 +91,14 @@ def test_ktamv_view_is_in_the_menu_but_not_in_the_grid(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     assert len(tab.tiles) == 4
     assert tab.big_views[-1].url.endswith("/ktamv/image")
-    click_button(tab, "NozzleSight")
-    assert tab.big_views[-1].isVisible() and is_highlighted(tab, "NozzleSight")
+    click_button(tab, "Nozzle Sight")
+    assert tab.big_views[-1].isVisible() and is_highlighted(tab, "Nozzle Sight")
     assert tab.big_views[-1].interval_ms > tab.big_views[0].interval_ms
 
 
 def test_coming_back_to_the_tab_starts_on_all_cameras(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
-    click_button(tab, "Alinhar bicos")
+    click_button(tab, "Nozzle Align")
     window.goto(HOME)
     window.goto(CAMERAS)
     assert is_highlighted(tab, "Todas")
@@ -164,7 +165,7 @@ def test_image_is_turned_as_in_mainsail():
 def test_a_camera_shown_alone_is_never_cropped(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     click_button(tab, "Interior")
-    big = tab.big_views[1]
+    big = tab.big_views[0]
     qtbot.waitUntil(lambda: big.has_image, timeout=2000)
     assert not big.fill and all(tile.fill for tile in tab.tiles)
     background = big.grab().toImage()

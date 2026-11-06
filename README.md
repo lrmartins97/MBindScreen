@@ -1,4 +1,6 @@
-# MBindScreen
+# MBind UI
+
+Ecrã tátil da M-BIND. Internamente (repositório, pasta e serviço) chama-se `MBindScreen`.
 
 Ecrã tátil da M-BIND (IDEX de seringas). Tema claro em branco e azul Blocks, organização
 do BlocksScreen, e feito para esta máquina: duas seringas, sem filamento, sem cama

@@ -88,7 +88,7 @@ def test_english_screen_keeps_every_page_inside_the_screen(qtbot, qapp, api, mon
         QtCore.QCoreApplication.processEvents()
         widgets = win.findChildren(QtWidgets.QLabel) + win.findChildren(QtWidgets.QPushButton)
         left = {w.text() for w in widgets if w.text() in i18n.ENGLISH_TEXT}
-        assert not left - {"Interior", "Material {}"}, left
+        assert not left - {"Interior", "Material {}", "Nozzle Align"}, left
 
 
 @pytest.mark.parametrize("read_only", [False, True])

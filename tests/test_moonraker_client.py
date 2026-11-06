@@ -165,7 +165,7 @@ def test_own_update_finished_is_signalled(qtbot, server, linked):
     qtbot.waitUntil(lambda: printer.ready, timeout=3000)
     with qtbot.waitSignal(client.self_updated, timeout=2000):
         server.notify(
-            "notify_update_response", {"application": "MBindScreen", "complete": True}
+            "notify_update_response", {"application": "mbind-ui", "complete": True}
         )
 
 
