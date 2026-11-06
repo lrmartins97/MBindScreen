@@ -6,6 +6,7 @@ the mark stays on the same camera pixel at every zoom level.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 import typing
 
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 FRAME_INTERVAL_MS = 100
 MARK_COLOR = "#ff2d55"
 NO_IMAGE_BG = "#1d3a4f"
+CORNER_RADIUS = 12
 RING_RADII = (0.08, 0.18)  # of the shorter side of the image
 MISSED_FRAMES_FOR_WARNING = 3
 CAPTION_MARGIN = 8
@@ -43,12 +45,14 @@ class CameraView(QtWidgets.QWidget):
         interval_ms: int = FRAME_INTERVAL_MS,
         transform: typing.Optional[QtGui.QTransform] = None,
         caption: str = "",
+        rounded: bool = False,
     ) -> None:
         super().__init__()
         self.api, self.url, self.show_mark = api, url, show_mark
         self.interval_ms = interval_ms
         self.transform = transform or QtGui.QTransform()
         self.caption = caption
+        self.rounded = rounded
         self.zoom = 1
         self.frame: typing.Optional[QtGui.QPixmap] = None
         self.missed = 0
@@ -129,19 +133,27 @@ class CameraView(QtWidgets.QWidget):
     def paintEvent(self, _event) -> None:
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
+        if self.rounded:
+            painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+            outline = QtGui.QPainterPath()
+            outline.addRoundedRect(QtCore.QRectF(self.rect()), CORNER_RADIUS, CORNER_RADIUS)
+            painter.setClipPath(outline)
         painter.fillRect(self.rect(), QtGui.QColor(NO_IMAGE_BG))
         if not self.has_image:
             painter.setPen(QtGui.QColor("#ffffff"))
             painter.drawText(
-                self.rect(), QtCore.Qt.AlignmentFlag.AlignCenter, "Sem imagem da câmara"
+                self.rect(), QtCore.Qt.AlignmentFlag.AlignCenter, tr("Sem imagem da câmara")
             )
             if self.caption:
                 self._draw_caption(painter)
             return
+        fit = (
+            QtCore.Qt.AspectRatioMode.KeepAspectRatioByExpanding
+            if self.rounded
+            else QtCore.Qt.AspectRatioMode.KeepAspectRatio
+        )
         image = self._visible_part().scaled(
-            self.size(),
-            QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-            QtCore.Qt.TransformationMode.SmoothTransformation,
+            self.size(), fit, QtCore.Qt.TransformationMode.SmoothTransformation
         )
         area = QtCore.QRect(QtCore.QPoint(0, 0), image.size())
         area.moveCenter(self.rect().center())

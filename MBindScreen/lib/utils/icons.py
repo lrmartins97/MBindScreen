@@ -33,6 +33,10 @@ PATHS = {
         '<circle cx="12" cy="12" r="2"/>'
         '<path d="M8 8a6 6 0 000 8M16 8a6 6 0 010 8M5 5a10 10 0 000 14M19 5a10 10 0 010 14"/>'
     ),
+    "language": (
+        '<circle cx="12" cy="12" r="9"/>'
+        '<path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>'
+    ),
     "calibrate": (
         '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2"/>'
         '<path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>'

@@ -1,6 +1,7 @@
 """Modal boxes drawn over the whole window (the printer has no window manager)."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import typing
 
 from lib.utils.widgets import CENTER, Clickable, PopupBox, button, label
@@ -48,7 +49,7 @@ def confirm(
     scrim.content.addWidget(message)
     row = QtWidgets.QHBoxLayout()
     row.setSpacing(10)
-    row.addWidget(button("Voltar", scrim.close_box, height=52))
+    row.addWidget(button(tr("Voltar"), scrim.close_box, height=52))
     row.addWidget(
         button(
             ok_text,
@@ -75,7 +76,7 @@ def choose(
         scrim.content.addWidget(
             button(text, lambda v=value: (scrim.close_box(), on_pick(v)), height=50)
         )
-    scrim.content.addWidget(button("Voltar", scrim.close_box, height=46))
+    scrim.content.addWidget(button(tr("Voltar"), scrim.close_box, height=46))
     scrim.open()
     return scrim
 
@@ -95,7 +96,7 @@ def keyboard(
     title: str,
     on_ok: typing.Callable[[str], None],
     minimum: int = 1,
-    ok_text: str = "Ligar",
+    ok_text: str = tr("Ligar"),
     text: str = "",
 ) -> Scrim:
     """Text entry. Shows what is typed: a wrong character is what fails most."""
@@ -147,12 +148,12 @@ def keyboard(
     change = button(SYMBOLS, lambda: toggle("layer", (0, 1)), height=48)
     bottom.addWidget(button(SHIFT, lambda: toggle("upper"), height=48))
     bottom.addWidget(change)
-    space = QtWidgets.QPushButton("espaço")
+    space = QtWidgets.QPushButton(tr("espaço"))
     space.setMinimumHeight(48)
     space.clicked.connect(lambda _=False: (state.update(text=state["text"] + " "), show()))
     bottom.addWidget(space, 1)
     bottom.addWidget(button("⌫", erase, height=48))
-    bottom.addWidget(button("Voltar", scrim.close_box, height=48))
+    bottom.addWidget(button(tr("Voltar"), scrim.close_box, height=48))
     ok = button(ok_text, accept, "accent", 48)
     bottom.addWidget(ok)
     scrim.content.addLayout(bottom)
@@ -173,7 +174,7 @@ def numpad(
     """Number entry. OK stays disabled while the value is out of range."""
     scrim = Scrim(anchor, 420)
     scrim.content.setSpacing(8)
-    scrim.content.addWidget(label(f"{title} ({minimum:g} a {maximum:g})", "value"))
+    scrim.content.addWidget(label(tr("{} ({:g} a {:g})", title, minimum, maximum), "value"))
     display = label(f"{start:g}", "display")
     display.setAlignment(
         QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
@@ -211,7 +212,7 @@ def numpad(
     scrim.content.addLayout(grid)
     row = QtWidgets.QHBoxLayout()
     row.setSpacing(10)
-    row.addWidget(button("Voltar", scrim.close_box, height=50))
+    row.addWidget(button(tr("Voltar"), scrim.close_box, height=50))
 
     def accept() -> None:
         value = parsed()

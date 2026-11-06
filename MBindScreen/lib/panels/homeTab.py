@@ -1,6 +1,7 @@
 """Home: machine state at a glance, the two tools and the way to the files."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import pathlib
 
 from lib import machine
@@ -25,7 +26,7 @@ class ToolCard(HoldArea):
         layout.setSpacing(2)
         top = QtWidgets.QHBoxLayout()
         top.addWidget(label(f"T{tool}", "cardTitle"))
-        self.chip = status_chip("Ativa")
+        self.chip = status_chip(tr("Ativa"))
         top.addStretch()
         top.addWidget(self.chip)
         self.temperature = label("—", "big")
@@ -38,7 +39,7 @@ class ToolCard(HoldArea):
         set_card_active(self, tool.active)
         self.chip.setVisible(tool.active)
         self.temperature.setText(f"{tool.temperature:.1f} °C")
-        target = f"alvo {tool.target:.0f} °C" if tool.target else "desligada"
+        target = tr("alvo {:.0f} °C", tool.target) if tool.target else tr("desligada")
         self.detail.setText(f"{tool.material} · {target}")
 
 
@@ -90,7 +91,7 @@ class HomeTab(QtWidgets.QWidget):
         files_layout.setContentsMargins(18, 10, 18, 10)
         picture = label()
         picture.setPixmap(pixmap("files", ACCENT, 46))
-        self.files_title = label("Ficheiros", "cardTitle")
+        self.files_title = label(tr("Ficheiros"), "cardTitle")
         files_layout.addStretch()
         files_layout.addWidget(picture)
         files_layout.addWidget(self.files_title)
@@ -114,13 +115,13 @@ class HomeTab(QtWidgets.QWidget):
         active = printer.is_printing
         progress = printer.get("virtual_sdcard", "progress", 0) or 0
         filename = (printer.get("print_stats", "filename", "") or "").rsplit("/", 1)[-1]
-        self.title.setText(machine.PRINT_STATE_TITLES.get(state, state.title()))
+        self.title.setText(tr(machine.PRINT_STATE_TITLES.get(state, state.title())))
         if active and filename:
             self.sub.setText(f"{filename} · {progress:.0%}")
         else:
-            self.sub.setText("Sem home feito" if not printer.homed() else "Home feito")
+            self.sub.setText(tr("Sem home feito") if not printer.homed() else tr("Home feito"))
         self.progress.setVisible(active)
         self.progress.setValue(int(progress * 1000))
-        self.files_title.setText("Impressão" if active else "Ficheiros")
+        self.files_title.setText(tr("Impressão") if active else tr("Ficheiros"))
         for index, card in self.tools.items():
             card.show_tool(printer.tool(index))

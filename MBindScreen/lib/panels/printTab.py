@@ -1,6 +1,7 @@
 """Print page: progress, PRINT_START stages, temperatures, live Z, pause and cancel."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib import gcodeCommands as gc
@@ -31,7 +32,7 @@ class StageBar(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
-        self.labels = [label(title, "dim") for _, title in machine.PREPARE_STAGES]
+        self.labels = [label(tr(title), "dim") for _, title in machine.PREPARE_STAGES]
         for widget in self.labels:
             layout.addWidget(widget)
         layout.addStretch()
@@ -89,7 +90,7 @@ class PrintTab(QtWidgets.QWidget):
         values.setHorizontalSpacing(20)
         self.values = {}
         for column, (key, title) in enumerate(
-            (("layer", "Camada"), ("elapsed", "Decorrido"), ("remaining", "Restante"))
+            (("layer", tr("Camada")), ("elapsed", tr("Decorrido")), ("remaining", tr("Restante")))
         ):
             value = label("—", "value")
             values.addWidget(label(title, "dim"), 0, column)
@@ -125,9 +126,9 @@ class PrintTab(QtWidgets.QWidget):
 
         bottom = QtWidgets.QHBoxLayout()
         bottom.setSpacing(12)
-        self.pause = button("Pausa", self._pause, height=56)
-        self.cancel = button("Cancelar impressão", self._cancel, "danger", 56)
-        self.done = button("Concluir", self.finished.emit, "accent", 56)
+        self.pause = button(tr("Pausa"), self._pause, height=56)
+        self.cancel = button(tr("Cancelar impressão"), self._cancel, "danger", 56)
+        self.done = button(tr("Concluir"), self.finished.emit, "accent", 56)
         for widget in (self.pause, self.cancel, self.done):
             bottom.addWidget(widget)
         root.addLayout(bottom)
@@ -140,7 +141,7 @@ class PrintTab(QtWidgets.QWidget):
         if printer.is_printing and printer.ready:
             numpad(
                 self,
-                f"Temperatura T{tool}",
+                tr("Temperatura T{}", tool),
                 printer.tool(tool).target,
                 printer.max_temp(tool),
                 lambda value: self.api.gcode(gc.set_temperature(tool, value)),
@@ -150,7 +151,7 @@ class PrintTab(QtWidgets.QWidget):
         delta = sign * self.z_steps.value
         change = self.printer.z_offset + delta - self._z_start
         if abs(change) > Z_LIMIT + 1e-9:
-            self.status.setText(f"Limite do ajuste de Z atingido (±{Z_LIMIT:g} mm)")
+            self.status.setText(tr("Limite do ajuste de Z atingido (±{:g} mm)", Z_LIMIT))
             return
         self.api.gcode(gc.babystep(delta))
 
@@ -161,9 +162,9 @@ class PrintTab(QtWidgets.QWidget):
     def _cancel(self) -> None:
         confirm(
             self,
-            "Cancelar a impressão? Não pode ser retomada.",
+            tr("Cancelar a impressão? Não pode ser retomada."),
             lambda: self.api.call("printer.print.cancel"),
-            "Cancelar impressão",
+            tr("Cancelar impressão"),
             danger=True,
         )
 
@@ -198,13 +199,13 @@ class PrintTab(QtWidgets.QWidget):
             printer.get("virtual_sdcard", "progress", 0) or 0
         )
         elapsed = printer.get("print_stats", "print_duration", 0) or 0
-        title = machine.PRINT_STATE_TITLES.get(state, state.title())
+        title = tr(machine.PRINT_STATE_TITLES.get(state, state.title()))
         message = printer.get("display_status", "message", "") or ""
         stage = machine.prepare_stage(message) if active else -1
-        caption = "A preparar" if stage >= 0 else title
+        caption = tr("A preparar") if stage >= 0 else title
         color = RED if state == "error" else ACCENT
         self.ring.set(progress, f"{progress * 100:.0f}%", caption, color)
-        self.name.setText(full.rsplit("/", 1)[-1] or "Sem impressão")
+        self.name.setText(full.rsplit("/", 1)[-1] or tr("Sem impressão"))
 
         self.stages.setVisible(stage >= 0)
         if stage >= 0:
@@ -225,11 +226,11 @@ class PrintTab(QtWidgets.QWidget):
             set_card_active(temp_card, tool.active)
             temp_card.value.setText(f"{tool.temperature:.1f} / {tool.target:.0f} °C")
             temp_card.material.setText(tool.material)
-        self.z_value.setText(f"Ajuste de Z: {printer.z_offset:+.3f} mm")
+        self.z_value.setText(tr("Ajuste de Z: {:+.3f} mm", printer.z_offset))
         can_adjust = active and printer.ready and printer.homed("z")
         for widget in (self.z_down, self.z_up):
             widget.setEnabled(can_adjust)
-        self.pause.setText("Retomar" if state == "paused" else "Pausa")
+        self.pause.setText(tr("Retomar") if state == "paused" else tr("Pausa"))
         for widget in (self.pause, self.cancel):
             widget.setVisible(active)
             widget.setEnabled(printer.ready)

@@ -1,6 +1,7 @@
 """Choosing a head and its temperature: the same from every page."""
 from __future__ import annotations
 
+from lib.i18n import tr
 from lib import gcodeCommands as gc
 from lib.panels.widgets.dialogs import numpad
 
@@ -17,7 +18,7 @@ def edit_temperature(anchor, printer, api, tool: int) -> None:
     select_tool(printer, api, tool)
     numpad(
         anchor,
-        f"Temperatura T{tool}",
+        tr("Temperatura T{}", tool),
         printer.tool(tool).target,
         printer.max_temp(tool),
         lambda value: api.gcode(gc.set_temperature(tool, value)),

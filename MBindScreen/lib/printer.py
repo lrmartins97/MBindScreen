@@ -5,6 +5,7 @@ they never parse Moonraker messages themselves.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import collections
 import dataclasses
 import logging
@@ -186,9 +187,9 @@ class Printer(QtCore.QObject):
 
     def material_name(self, slot: int) -> str:
         if slot <= 0:
-            return "Sem material"
+            return tr("Sem material")
         name = self.get(f"{machine.MATERIAL_PREFIX}{slot}", "name", None)
-        return str(name) if name else f"Material {slot}"
+        return str(name) if name else tr("Material {}", slot)
 
     def materials(self) -> list[tuple[int, str]]:
         return [

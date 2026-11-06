@@ -1,11 +1,15 @@
 """Settings: messages, system, updates, screen switch and restarts."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import datetime
 import logging
+import os
+import sys
 
 from lib import screenSwitch
-from lib.panels.widgets.dialogs import confirm
+from lib import i18n
+from lib.panels.widgets.dialogs import choose, confirm
 from lib.panels.networkPage import HotspotPage, NetworkPage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
@@ -22,6 +26,7 @@ from PyQt6 import QtWidgets
 
 logger = logging.getLogger(__name__)
 OWN_UPDATE_NAME = "MBindScreen"
+MENU_COLUMNS = 2
 
 
 def update_available(entry: dict) -> bool:
@@ -35,9 +40,9 @@ class MessagesPage(SubPage):
     """Errors first, then the last console lines."""
 
     def __init__(self, printer, back) -> None:
-        super().__init__("Mensagens", back)
+        super().__init__(tr("Mensagens"), back)
         self.printer = printer
-        self.head.addWidget(button("Limpar avisos", printer.clear_alerts, height=46))
+        self.head.addWidget(button(tr("Limpar avisos"), printer.clear_alerts, height=46))
         self.area, self.column = scroll_column(4)
         self.body.addWidget(self.area, 1)
         printer.console_line.connect(lambda _line: self.refresh())
@@ -74,7 +79,7 @@ class MessagesPage(SubPage):
 
 class SystemPage(SubPage):
     def __init__(self, api, back) -> None:
-        super().__init__("Sistema", back)
+        super().__init__(tr("Sistema"), back)
         self.api = api
         frame, self.column = card(16, 6)
         self.body.addWidget(frame)
@@ -95,14 +100,14 @@ class SystemPage(SubPage):
 
     def _printer_info(self, result, _error) -> None:
         if result:
-            self._row("Nome", str(result.get("hostname", "—")))
+            self._row(tr("Nome"), str(result.get("hostname", "—")))
             self._row("Klipper", str(result.get("software_version", "—")))
 
     def _system_info(self, result, _error) -> None:
         info = (result or {}).get("system_info", {})
         distribution = info.get("distribution", {}).get("name")
         if distribution:
-            self._row("Sistema", distribution)
+            self._row(tr("Sistema"), distribution)
         for name, interface in info.get("network", {}).items():
             addresses = [
                 a["address"]
@@ -117,9 +122,9 @@ class UpdatesPage(SubPage):
     """Update state of everything Moonraker manages; only this screen updates here."""
 
     def __init__(self, printer, api, back) -> None:
-        super().__init__("Atualizações", back)
+        super().__init__(tr("Atualizações"), back)
         self.printer, self.api = printer, api
-        self.head.addWidget(button("Verificar", self._check, height=46))
+        self.head.addWidget(button(tr("Verificar"), self._check, height=46))
         self.note = label("", "dim")
         self.note.setWordWrap(True)
         self.body.addWidget(self.note)
@@ -134,13 +139,13 @@ class UpdatesPage(SubPage):
         self.api.call("machine.update.status", None, self._loaded)
 
     def _check(self) -> None:
-        self.note.setText("A verificar…")
+        self.note.setText(tr("A verificar…"))
         self.api.call("machine.update.refresh", None, self._refreshed)
 
     def _refreshed(self, _result, error) -> None:
         text = ""
         if error:
-            text = error.get("message", "Falhou") if isinstance(error, dict) else str(error)
+            text = error.get("message", tr("Falhou")) if isinstance(error, dict) else str(error)
         self.note.setText(text)
         self._load()
 
@@ -165,40 +170,40 @@ class UpdatesPage(SubPage):
         row.addLayout(column, 1)
         available = update_available(entry)
         if name == OWN_UPDATE_NAME and available:
-            row.addWidget(button("Atualizar", self._update_self, "accent", 46))
+            row.addWidget(button(tr("Atualizar"), self._update_self, "accent", 46))
         else:
-            state = label("Atualização disponível" if available else "Atualizado", "dim")
+            state = label(tr("Atualização disponível") if available else tr("Atualizado"), "dim")
             state.setStyleSheet(f"color: {ACCENT if available else DIM};")
             row.addWidget(state)
         return frame
 
     def _update_self(self) -> None:
         if not self.printer.can_act:
-            self.note.setText("Não é possível atualizar durante uma impressão.")
+            self.note.setText(tr("Não é possível atualizar durante uma impressão."))
             return
         confirm(
             self,
-            "Atualizar o MBindScreen? O ecrã reinicia no fim.",
+            tr("Atualizar o MBindScreen? O ecrã reinicia no fim."),
             lambda: self.api.call(
                 "machine.update.upgrade", {"name": OWN_UPDATE_NAME}, self._refreshed
             ),
-            "Atualizar",
+            tr("Atualizar"),
         )
 
 
 class ScreenPage(SubPage):
     def __init__(self, printer, api, back) -> None:
-        super().__init__("Ecrã", back)
+        super().__init__(tr("Ecrã"), back)
         self.printer, self.api = printer, api
         text = label(
-            "O KlipperScreen continua instalado. Podes mudar a qualquer momento, mesmo "
+            tr("O KlipperScreen continua instalado. Podes mudar a qualquer momento, mesmo "
             "durante uma impressão: a impressão não é afetada. A máquina arranca com o "
-            "último ecrã escolhido."
+            "último ecrã escolhido.")
         )
         text.setWordWrap(True)
         self.body.addWidget(text)
         self.body.addWidget(
-            button("Mudar para o KlipperScreen", self._switch, "accent", 64)
+            button(tr("Mudar para o KlipperScreen"), self._switch, "accent", 64)
         )
         self.note = label("", "dim")
         self.note.setWordWrap(True)
@@ -208,25 +213,25 @@ class ScreenPage(SubPage):
     def _switch(self) -> None:
         confirm(
             self,
-            "Mudar para o KlipperScreen? O ecrã fica preto alguns segundos.",
+            tr("Mudar para o KlipperScreen? O ecrã fica preto alguns segundos."),
             lambda: screenSwitch.switch_to_klipperscreen(self.api, self._failed),
-            "Mudar",
+            tr("Mudar"),
         )
 
     def _failed(self, message: str) -> None:
-        self.note.setText(f"Não foi possível mudar: {message}")
+        self.note.setText(tr("Não foi possível mudar: {}", message))
 
 
 class RestartPage(SubPage):
     def __init__(self, printer, api, back) -> None:
-        super().__init__("Reiniciar", back)
+        super().__init__(tr("Reiniciar"), back)
         self.printer, self.api = printer, api
         self.buttons = []
         items = (
-            ("Reiniciar o Klipper", "printer.restart", False),
-            ("Reiniciar o firmware", "printer.firmware_restart", False),
-            ("Reiniciar o computador", "machine.reboot", True),
-            ("Desligar o computador", "machine.shutdown", True),
+            (tr("Reiniciar o Klipper"), "printer.restart", False),
+            (tr("Reiniciar o firmware"), "printer.firmware_restart", False),
+            (tr("Reiniciar o computador"), "machine.reboot", True),
+            (tr("Desligar o computador"), "machine.shutdown", True),
         )
         for text, method, danger in items:
             widget = button(
@@ -242,11 +247,17 @@ class RestartPage(SubPage):
         self.refresh()
 
     def _ask(self, text: str, method: str, danger: bool) -> None:
-        confirm(self, f"{text}?", lambda: self.api.call(method), "Confirmar", danger)
+        confirm(self, f"{text}?", lambda: self.api.call(method), tr("Confirmar"), danger)
 
     def refresh(self) -> None:
         for widget in self.buttons:
             widget.setEnabled(not self.printer.is_printing)
+
+
+def restart_screen() -> None:
+    """The same process starts again, under the same service, in the new language."""
+    logger.info("Restarting the screen")
+    os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 class SettingsTab(QtWidgets.QStackedWidget):
@@ -256,9 +267,10 @@ class SettingsTab(QtWidgets.QStackedWidget):
         root = QtWidgets.QVBoxLayout(self.main)
         root.setContentsMargins(14, 12, 14, 12)
         root.setSpacing(8)
-        root.addWidget(label("Definições", "pageTitle"))
-        area, column = scroll_column(8)
-        root.addWidget(area, 1)
+        root.addWidget(label(tr("Definições"), "pageTitle"))
+        grid = QtWidgets.QGridLayout()
+        grid.setSpacing(8)
+        root.addLayout(grid)
         self.addWidget(self.main)
         self.messages = MessagesPage(printer, self.reset)
         back_to_network = lambda: self.setCurrentWidget(self.network)  # noqa: E731
@@ -273,22 +285,34 @@ class SettingsTab(QtWidgets.QStackedWidget):
         self.addWidget(self.wifi)
         self.addWidget(self.hotspot)
         pages = (
-            ("bell", "Mensagens", "Avisos e consola do Klipper.", self.messages),
-            ("wifi", "Rede", "Ethernet, Wi-Fi e hotspot.", self.network),
-            ("info", "Sistema", "Versões e endereço de rede.", SystemPage(api, self.reset)),
-            ("update", "Atualizações", "Estado do que o Moonraker atualiza.",
+            ("bell", tr("Mensagens"), tr("Avisos e consola do Klipper."), self.messages),
+            ("wifi", tr("Rede"), tr("Ethernet, Wi-Fi e hotspot."), self.network),
+            ("info", tr("Sistema"), tr("Versões e endereço de rede."), SystemPage(api, self.reset)),
+            ("update", tr("Atualizações"), tr("Estado do que o Moonraker atualiza."),
              UpdatesPage(printer, api, self.reset)),
-            ("screen", "Ecrã", "Mudar para o KlipperScreen.",
+            ("screen", tr("Ecrã"), tr("Mudar para o KlipperScreen."),
              ScreenPage(printer, api, self.reset)),
-            ("power", "Reiniciar", "Klipper, firmware e computador.",
+            ("power", tr("Reiniciar"), tr("Klipper, firmware e computador."),
              RestartPage(printer, api, self.reset)),
         )
-        for icon_name, title, description, page in pages:
+        for index, (icon_name, title, description, page) in enumerate(pages):
             self.addWidget(page)
             row = ListRow(icon_name, title, description)
             row.clicked.connect(lambda p=page: self.setCurrentWidget(p))
-            column.addWidget(row)
-        column.addStretch()
+            grid.addWidget(row, index // MENU_COLUMNS, index % MENU_COLUMNS)
+        self.language = ListRow("language", tr("Idioma"), i18n.LANGUAGES[i18n.language()])
+        self.language.clicked.connect(self._choose_language)
+        grid.addWidget(self.language, len(pages) // MENU_COLUMNS, len(pages) % MENU_COLUMNS)
+        root.addStretch()
+
+    def _choose_language(self) -> None:
+        options = [(name, code) for code, name in i18n.LANGUAGES.items()]
+        choose(self, tr("Idioma"), options, self._set_language)
+
+    def _set_language(self, code: str) -> None:
+        if code != i18n.language():
+            i18n.save_language(code)
+            restart_screen()
 
     def reset(self) -> None:
         self.setCurrentWidget(self.main)

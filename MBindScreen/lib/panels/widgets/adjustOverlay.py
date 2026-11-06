@@ -5,6 +5,7 @@ Mainsail, and closes by itself when the step ends anywhere.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 from lib import gcodeCommands as gc
 from lib.utils.widgets import CENTER, Clickable, PopupBox, button, label
 from PyQt6 import QtCore, QtWidgets
@@ -45,11 +46,11 @@ class AdjustOverlay(Clickable):
 
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(10)
-        self.abort = button("Cancelar", lambda: self.api.gcode(gc.ABORT), height=54)
+        self.abort = button(tr("Cancelar"), lambda: self.api.gcode(gc.ABORT), height=54)
         self.adjusted = button(
-            "Ajustei o parafuso", lambda: self.api.gcode(gc.ADJUSTED), height=54
+            tr("Ajustei o parafuso"), lambda: self.api.gcode(gc.ADJUSTED), height=54
         )
-        self.accept = button("Aceitar", lambda: self.api.gcode(gc.ACCEPT), "accent", 54)
+        self.accept = button(tr("Aceitar"), lambda: self.api.gcode(gc.ACCEPT), "accent", 54)
         for widget in (self.abort, self.adjusted, self.accept):
             row.addWidget(widget)
         layout.addLayout(row)
@@ -71,24 +72,24 @@ class AdjustOverlay(Clickable):
         self.adjusted.setVisible(not probe)
         if probe:
             z = self.printer.get("manual_probe", "z_position", None)
-            self.title.setText("Teste do papel")
+            self.title.setText(tr("Teste do papel"))
             self.hint.setText(
-                "Sobe o prato até o bico prender ligeiramente uma folha de papel. "
-                "Valores negativos aproximam o prato do bico."
+                tr("Sobe o prato até o bico prender ligeiramente uma folha de papel. "
+                "Valores negativos aproximam o prato do bico.")
             )
             self.value.setText("—" if z is None else f"Z {z:.3f} mm")
         else:
             screw = self.printer.get("bed_screws", "current_screw", 0) or 0
             accepted = self.printer.get("bed_screws", "accepted_screws", 0) or 0
             stage = self.printer.get("bed_screws", "state", "")
-            self.title.setText("Ajuste dos parafusos do prato")
+            self.title.setText(tr("Ajuste dos parafusos do prato"))
             self.hint.setText(
-                "Roda o parafuso até o bico prender a folha de papel. Se mexeste nele, "
-                "carrega em Ajustei o parafuso; se já estava bem, em Aceitar."
+                tr("Roda o parafuso até o bico prender a folha de papel. Se mexeste nele, "
+                "carrega em Ajustei o parafuso; se já estava bem, em Aceitar.")
             )
             self.value.setText(
-                f"Parafuso {screw + 1}"
-                + (" · ajuste fino" if stage == "fine" else "")
-                + f" · {accepted} aceites"
+                tr("Parafuso {}", screw + 1)
+                + (tr(" · ajuste fino") if stage == "fine" else "")
+                + tr(" · {} aceites", accepted)
             )
         self.box.fit()

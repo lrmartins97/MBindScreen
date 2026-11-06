@@ -1,6 +1,7 @@
 """Control: move the axes, choose the active head, lights, UV and fans."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 import typing
 
@@ -69,7 +70,7 @@ class ControlTab(QtWidgets.QWidget):
     # --- layout ---------------------------------------------------------
     def _build_jog(self) -> QtWidgets.QFrame:
         frame, layout = card(12, 8)
-        layout.addWidget(label("Mover", "cardTitle"))
+        layout.addWidget(label(tr("Mover"), "cardTitle"))
         grid = QtWidgets.QGridLayout()
         grid.setSpacing(6)
         self.jog_buttons = []
@@ -90,8 +91,8 @@ class ControlTab(QtWidgets.QWidget):
         jog_arrow("left", "x", -1, 1, 0)
         jog_arrow("right", "x", 1, 1, 2)
         jog_arrow("down", "y", -1, 2, 1)
-        plate_button("Prato\n▲", -1, 0)
-        plate_button("Prato\n▼", 1, 2)
+        plate_button(tr("Prato\n▲"), -1, 0)
+        plate_button(tr("Prato\n▼"), 1, 2)
         self.home = button("Home", self._home, "accent", 64)
         grid.addWidget(self.home, 1, 1)
         self.z_label = label("Z", "dim")
@@ -99,7 +100,7 @@ class ControlTab(QtWidgets.QWidget):
         grid.addWidget(self.z_label, 1, 3)
         layout.addLayout(grid)
         self.distances = ChoiceRow(JOG_DISTANCES, "", 1)
-        layout.addWidget(label("Distância (mm)", "dim"))
+        layout.addWidget(label(tr("Distância (mm)"), "dim"))
         layout.addWidget(self.distances)
         self.hint = label("", "dim")
         self.hint.setWordWrap(True)
@@ -111,7 +112,7 @@ class ControlTab(QtWidgets.QWidget):
         column = QtWidgets.QVBoxLayout()
         column.setSpacing(12)
         tools, tools_layout = card(12, 8)
-        tools_layout.addWidget(label("Cabeça ativa", "cardTitle"))
+        tools_layout.addWidget(label(tr("Cabeça ativa"), "cardTitle"))
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(8)
         self.tool_buttons = {}
@@ -120,17 +121,17 @@ class ControlTab(QtWidgets.QWidget):
             self.tool_buttons[tool] = widget
             row.addWidget(widget)
         tools_layout.addLayout(row)
-        self.motors = button("Desligar motores", self._motors_off, height=46)
+        self.motors = button(tr("Desligar motores"), self._motors_off, height=46)
         tools_layout.addWidget(self.motors)
         column.addWidget(tools)
 
         outputs, outputs_layout = card(12, 6)
-        outputs_layout.addWidget(label("Câmara", "cardTitle"))
+        outputs_layout.addWidget(label(tr("Câmara"), "cardTitle"))
         self.light = LevelRow(
-            "bulb", "Luz", lambda v: self._set_pin("Led_Chamber", v)
+            "bulb", tr("Luz"), lambda v: self._set_pin("Led_Chamber", v)
         )
         self.fan = LevelRow(
-            "fan", "Ventoinha", lambda v: self._set_fan("Chamber_Fan", v)
+            "fan", tr("Ventoinha"), lambda v: self._set_fan("Chamber_Fan", v)
         )
         self.uv = LevelRow("uv", "UV", self._set_uv)
         for widget in (self.light, self.fan, self.uv):
@@ -147,7 +148,7 @@ class ControlTab(QtWidgets.QWidget):
         wanted = sign * self.distances.value
         distance = machine.clamp_jog(self.printer.position(axis), wanted, low, high)
         if distance == 0:
-            self.hint.setText(f"Limite do eixo {axis.upper()} atingido.")
+            self.hint.setText(tr("Limite do eixo {} atingido.", axis.upper()))
             return
         self.hint.setText("")
         speed = machine.JOG_SPEED_Z if axis == "z" else machine.JOG_SPEED_XY
@@ -156,8 +157,8 @@ class ControlTab(QtWidgets.QWidget):
     def _home(self) -> None:
         confirm(
             self,
-            "Fazer home a todos os eixos? Sem o home do Z feito, o prato desce 8 mm "
-            "em cada home.",
+            tr("Fazer home a todos os eixos? Sem o home do Z feito, o prato desce 8 mm "
+            "em cada home."),
             lambda: self.api.gcode(gc.HOME_ALL),
             "Home",
         )
@@ -180,9 +181,9 @@ class ControlTab(QtWidgets.QWidget):
             return
         scrim = confirm(
             self,
-            f"Ligar os LED UV a {percent}%? Não olhar diretamente para a luz.",
+            tr("Ligar os LED UV a {}%? Não olhar diretamente para a luz.", percent),
             lambda: self._set_pin("UV", percent),
-            "Ligar UV",
+            tr("Ligar UV"),
             danger=True,
         )
         scrim.destroyed.connect(self.refresh)
@@ -206,7 +207,7 @@ class ControlTab(QtWidgets.QWidget):
                 f"Z {printer.position('z'):.2f}"
             )
         else:
-            self.z_label.setText("Sem\nhome")
+            self.z_label.setText(tr("Sem\nhome"))
         ready = printer.ready
         self.light.show_level(printer.get(machine.CHAMBER_LIGHT, "value", 0) or 0, ready)
         self.fan.show_level(printer.get(machine.CHAMBER_FAN, "speed", 0) or 0, ready)

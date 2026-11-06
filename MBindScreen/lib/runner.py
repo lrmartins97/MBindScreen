@@ -5,6 +5,7 @@ the latest console line as progress and always offers the emergency stop.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib.utils.theme import ACCENT, RED
@@ -12,7 +13,7 @@ from lib.utils.widgets import CENTER, Clickable, PopupBox, button, label
 from PyQt6 import QtCore, QtWidgets
 
 logger = logging.getLogger(__name__)
-STARTING = "A começar…"
+STARTING = tr("A começar…")
 
 
 class Runner(QtCore.QObject):
@@ -47,7 +48,7 @@ class Runner(QtCore.QObject):
 
     def _result(self, _result, error) -> None:
         if error:
-            text = error.get("message", "Falhou") if isinstance(error, dict) else str(error)
+            text = error.get("message", tr("Falhou")) if isinstance(error, dict) else str(error)
             logger.warning("Routine failed: %s", text)
             self.running, self.ok, self.message, self.finished = False, False, text, True
             self.changed.emit()
@@ -62,7 +63,7 @@ class Runner(QtCore.QObject):
         self.finished = not self._waiting_for_user()
         self.ok = True
         if self.message == STARTING:  # otherwise keep the last line from the macro
-            self.message = "Sem mensagens da máquina."
+            self.message = tr("Sem mensagens da máquina.")
         self.changed.emit()
 
     def _waiting_for_user(self) -> bool:
@@ -95,7 +96,7 @@ class RunOverlay(Clickable):
         self.title = label("", "cardTitle")
         self.text = label()
         self.text.setWordWrap(True)
-        self.stop = button("Paragem de emergência", runner.emergency_stop, "danger", 54)
+        self.stop = button(tr("Paragem de emergência"), runner.emergency_stop, "danger", 54)
         self.ok = button("OK", runner.acknowledge, "accent", 54)
         for widget in (self.title, self.text, self.stop, self.ok):
             layout.addWidget(widget)
@@ -116,7 +117,7 @@ class RunOverlay(Clickable):
             self.title.setText(runner.title)
             self.title.setStyleSheet("")
         else:
-            self.title.setText("Concluído" if runner.ok else "Falhou")
+            self.title.setText(tr("Concluído") if runner.ok else tr("Falhou"))
             self.title.setStyleSheet(f"color: {ACCENT if runner.ok else RED};")
         self.text.setText(runner.message)
         self.stop.setVisible(runner.running)

@@ -1,6 +1,7 @@
 """Main window: creates the subsystems and connects them. No logic of its own."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 import time
 
@@ -86,7 +87,7 @@ class MainWindow(QtWidgets.QWidget):
         right = QtWidgets.QVBoxLayout()
         right.setSpacing(0)
         if read_only:
-            trial = QtWidgets.QLabel("Modo de experiência: os comandos não chegam à máquina")
+            trial = QtWidgets.QLabel(tr("Modo de experiência: os comandos não chegam à máquina"))
             trial.setObjectName("trial")
             right.addWidget(trial)
         right.addWidget(self.stack, 1)
@@ -173,8 +174,8 @@ class MainWindow(QtWidgets.QWidget):
     def emergency_stop(self) -> None:
         confirm(
             self,
-            "Paragem de emergência? Pára tudo de imediato. Depois é preciso reiniciar "
-            "o firmware.",
+            tr("Paragem de emergência? Pára tudo de imediato. Depois é preciso reiniciar "
+            "o firmware."),
             lambda: self.api.call("printer.emergency_stop"),
             "PARAR",
             danger=True,

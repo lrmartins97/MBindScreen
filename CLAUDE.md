@@ -26,6 +26,9 @@ mas desorganizado: o aspeto vem daí, a organização vem do BlocksScreen
   Nunca voltar ao tema escuro e laranja do MyScreen. O azul dá 2,6:1 nos ícones, abaixo
   do recomendado: foi escolha do utilizador, e `test_theme.py` regista-o.
 - Texto da interface, documentação e commits em português. O código em inglês.
+- **Idiomas:** todo o texto novo da interface passa por `tr()` e tem tradução em
+  `lib/i18n.py`; o `test_i18n.py` falha se faltar. Não usar `tr()` em textos comparados com
+  mensagens do Klipper (`PREPARE_STAGES`, `PRINTING_MESSAGE`).
 - Página de rede organizada como no BlocksScreen: Ethernet, Wi-Fi e hotspot.
 
 ## Dados confidenciais

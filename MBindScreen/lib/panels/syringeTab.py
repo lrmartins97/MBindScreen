@@ -2,6 +2,7 @@
 paste and clean the nozzle, for each of the two heads."""
 from __future__ import annotations
 
+from lib.i18n import tr
 from lib import gcodeCommands as gc
 from lib import machine
 from lib.panels.widgets.dialogs import choose, confirm
@@ -33,9 +34,9 @@ class SyringePanel(HoldArea):
         layout.setContentsMargins(14, 10, 14, 12)
         layout.setSpacing(8)
         top = QtWidgets.QHBoxLayout()
-        top.addWidget(label(f"Seringa T{tool}", "cardTitle"))
+        top.addWidget(label(tr("Seringa T{}", tool), "cardTitle"))
         top.addStretch()
-        self.chip = status_chip("Ativa")
+        self.chip = status_chip(tr("Ativa"))
         top.addWidget(self.chip)
         layout.addLayout(top)
 
@@ -49,18 +50,18 @@ class SyringePanel(HoldArea):
         temp_layout.addStretch()
         temp_layout.addWidget(self.target)
         layout.addWidget(self.temp_area)
-        layout.addWidget(label("Manter premido: temperatura", "dim"))
+        layout.addWidget(label(tr("Manter premido: temperatura"), "dim"))
 
         self.material = button("—", self._pick_material, height=44)
         layout.addWidget(self.material)
         moves = QtWidgets.QHBoxLayout()
         moves.setSpacing(8)
-        self.retract = button("Recuar", lambda: self._move(-1), height=56)
-        self.advance = button("Avançar", lambda: self._move(1), "accent", 56)
+        self.retract = button(tr("Recuar"), lambda: self._move(-1), height=56)
+        self.advance = button(tr("Avançar"), lambda: self._move(1), "accent", 56)
         moves.addWidget(self.retract)
         moves.addWidget(self.advance)
         layout.addLayout(moves)
-        self.clean = button("Limpar bico", self._clean, height=44)
+        self.clean = button(tr("Limpar bico"), self._clean, height=44)
         layout.addWidget(self.clean)
 
     def _select(self) -> None:
@@ -70,11 +71,11 @@ class SyringePanel(HoldArea):
         edit_temperature(self, self.tab.printer, self.tab.api, self.tool_index)
 
     def _pick_material(self) -> None:
-        options = [("Sem material", 0)]
+        options = [(tr("Sem material"), 0)]
         options += [(name, slot) for slot, name in self.tab.printer.materials()]
         choose(
             self,
-            f"Material da seringa T{self.tool_index}",
+            tr("Material da seringa T{}", self.tool_index),
             options,
             lambda slot: self.tab.api.gcode(gc.set_material(self.tool_index, slot)),
         )
@@ -91,12 +92,11 @@ class SyringePanel(HoldArea):
     def _clean(self) -> None:
         confirm(
             self,
-            f"Limpar o bico do T{self.tool_index}? A cabeça desloca-se para as estações "
-            "de limpeza (faz home se for preciso).",
+            tr("Limpar o bico do T{}? A cabeça desloca-se para as estações de limpeza (faz home se for preciso).", self.tool_index),
             lambda: self.tab.runner.start(
-                f"Limpar bico T{self.tool_index}", gc.clean_nozzle(self.tool_index)
+                tr("Limpar bico T{}", self.tool_index), gc.clean_nozzle(self.tool_index)
             ),
-            "Limpar",
+            tr("Limpar"),
         )
 
     def refresh(self) -> None:
@@ -105,7 +105,7 @@ class SyringePanel(HoldArea):
         set_card_active(self, tool.active)
         self.chip.setVisible(tool.active)
         self.temperature.setText(f"{tool.temperature:.1f} °C")
-        self.target.setText(f"alvo {tool.target:.0f} °C" if tool.target else "desligada")
+        self.target.setText(tr("alvo {:.0f} °C", tool.target) if tool.target else tr("desligada"))
         self.material.setText(tool.material)
         idle = printer.can_act
         for widget in (self.retract, self.advance, self.clean, self.material):
@@ -132,8 +132,8 @@ class SyringeTab(QtWidgets.QWidget):
         grid.setVerticalSpacing(4)
         self.distance = ChoiceRow(DISTANCES, "", 1)
         self.speed = ChoiceRow(SPEEDS, "", 2)
-        grid.addWidget(label("Quanto o êmbolo anda (mm)", "dim"), 0, 0)
-        grid.addWidget(label("Velocidade do êmbolo (mm/s)", "dim"), 0, 1)
+        grid.addWidget(label(tr("Quanto o êmbolo anda (mm)"), "dim"), 0, 0)
+        grid.addWidget(label(tr("Velocidade do êmbolo (mm/s)"), "dim"), 0, 1)
         grid.addWidget(self.distance, 1, 0)
         grid.addWidget(self.speed, 1, 1)
         layout.addLayout(grid)
@@ -153,6 +153,5 @@ class SyringeTab(QtWidgets.QWidget):
         volume = machine.plunger_volume(self.distance.value, diameter)
         flow = machine.plunger_volume(self.speed.value, diameter)
         self.equivalent.setText(
-            f"O êmbolo empurra {machine.format_volume(volume)} a "
-            f"{machine.format_volume(flow)}/s (seringa de {diameter:g} mm)"
+            tr("O êmbolo empurra {} a {}/s (seringa de {:g} mm)", machine.format_volume(volume), machine.format_volume(flow), diameter)
         )

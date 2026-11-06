@@ -94,7 +94,8 @@ Serve para a experiência e para o `install.sh`, e recusa correr com a máquina 
 trabalhar. Sai tudo isto:
 
 - Serviços, autorização no Moonraker e bloco do `moonraker.conf`.
-- O código, o ambiente Python, os logs, `~/.config/mbind-screen` e `MBindScreen.cfg`.
+- O código, o ambiente Python, os logs, `MBindScreen.cfg` e `~/.config/mbind-screen`,
+  onde estão o idioma e a lista de pacotes.
 - Os pacotes que o MBindScreen instalou, com as dependências. Os que já existiam ficam
   intactos, porque a instalação regista só os novos em
   `~/.config/mbind-screen/pacotes-instalados`.

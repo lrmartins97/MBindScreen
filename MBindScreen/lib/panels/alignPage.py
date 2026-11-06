@@ -9,6 +9,7 @@ Mainsail, and it replaces the prompt those macros show.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib import gcodeCommands as gc
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 JOG_STEPS = (0.01, 0.05, 0.1, 0.5, 1)
 ZOOM_LEVELS = (1, 2, 4)
 DEFAULT_ZOOM_INDEX = 1
-WAITING_TEXT = "A cabeça está a deslocar-se. Aguarda."
+WAITING_TEXT = tr("A cabeça está a deslocar-se. Aguarda.")
 
 
 class AlignPage(QtWidgets.QFrame):
@@ -86,16 +87,16 @@ class AlignPage(QtWidgets.QFrame):
         self.position.setStyleSheet("qproperty-alignment: AlignCenter;")
         grid.addWidget(self.position, 1, 1)
         layout.addLayout(grid)
-        layout.addWidget(label("Passo (mm)", "dim"))
+        layout.addWidget(label(tr("Passo (mm)"), "dim"))
         self.steps = ChoiceRow(JOG_STEPS, "", 1)
         layout.addWidget(self.steps)
         column.addWidget(frame)
-        self.next = button("Seguinte", self._next, "accent", 58)
+        self.next = button(tr("Seguinte"), self._next, "accent", 58)
         column.addWidget(self.next)
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(8)
-        self.cancel = button("Cancelar", self._cancel, height=52)
-        self.stop = button("Parar", self._emergency, "danger", 52)
+        self.cancel = button(tr("Cancelar"), self._cancel, height=52)
+        self.stop = button(tr("Parar"), self._emergency, "danger", 52)
         row.addWidget(self.cancel)
         row.addWidget(self.stop)
         column.addLayout(row)
@@ -110,21 +111,21 @@ class AlignPage(QtWidgets.QFrame):
         self.api.gcode(gc.align_jog(axis, sign * self.steps.value))
 
     def _next(self) -> None:
-        self.runner.start("Calibração X/Y", gc.ALIGN_NEXT)
+        self.runner.start(tr("Calibração X/Y"), gc.ALIGN_NEXT)
 
     def _cancel(self) -> None:
         confirm(
             self,
-            "Cancelar a calibração? O passo atual não é gravado.",
-            lambda: self.runner.start("A cancelar a calibração", gc.ALIGN_CANCEL),
-            "Cancelar calibração",
+            tr("Cancelar a calibração? O passo atual não é gravado."),
+            lambda: self.runner.start(tr("A cancelar a calibração"), gc.ALIGN_CANCEL),
+            tr("Cancelar calibração"),
             danger=True,
         )
 
     def _emergency(self) -> None:
         confirm(
             self,
-            "Paragem de emergência? Pára tudo de imediato.",
+            tr("Paragem de emergência? Pára tudo de imediato."),
             lambda: self.api.call("printer.emergency_stop"),
             "PARAR",
             danger=True,
@@ -139,7 +140,7 @@ class AlignPage(QtWidgets.QFrame):
         prompt = printer.prompt
         ready = prompt is not None and is_align_prompt(prompt)
         tool = 1 if printer.get(machine.ALIGN_VARS, "origin_set", 0) else 0
-        self.title.setText(f"Calibração X/Y manual · T{tool}")
+        self.title.setText(tr("Calibração X/Y manual · T{}", tool))
         self.step.setText(prompt.lines[0] if ready and prompt.lines else WAITING_TEXT)
         self.position.setText(
             f"X {printer.position('x'):.2f}\nY {printer.position('y'):.2f}"

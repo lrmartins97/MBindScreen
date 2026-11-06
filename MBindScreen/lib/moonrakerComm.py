@@ -5,6 +5,7 @@ Reads go through Printer; panels only use ``gcode`` / ``call`` to act.
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import json
 import logging
 import typing
@@ -20,7 +21,7 @@ RETRY_MS = 2000
 IMAGE_TIMEOUT_MS = 3000
 APP_NAME = "MBindScreen"
 
-READ_ONLY_MESSAGE = "Modo de experiência: comando não enviado"
+READ_ONLY_MESSAGE = tr("Modo de experiência: comando não enviado")
 READ_ONLY_ALLOWED = (
     "printer.info",
     "printer.objects.",
@@ -139,7 +140,7 @@ class MoonWebSocket(QtCore.QObject):
         logger.warning("Websocket disconnected")
         self._up = False
         for callback in self._pending.values():
-            callback(None, {"message": "Ligação ao Moonraker perdida"})
+            callback(None, {"message": tr("Ligação ao Moonraker perdida")})
         self._pending.clear()
         self.link_down.emit()
         self._reconnect.start()
@@ -160,7 +161,7 @@ class MoonWebSocket(QtCore.QObject):
         if not self._up:
             logger.warning("Dropped %s: not connected", method)
             if callback:
-                callback(None, {"message": "Sem ligação ao Moonraker"})
+                callback(None, {"message": tr("Sem ligação ao Moonraker")})
             return
         request: dict = {"jsonrpc": "2.0", "method": method, "id": self._next_id}
         if params:

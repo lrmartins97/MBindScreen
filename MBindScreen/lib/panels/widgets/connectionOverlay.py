@@ -1,6 +1,7 @@
 """Full-window page while Moonraker or Klipper are not ready."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib import machine, screenSwitch
@@ -28,13 +29,13 @@ class ConnectionOverlay(QtWidgets.QFrame):
         layout.addWidget(self.text)
         row = QtWidgets.QHBoxLayout()
         row.setSpacing(12)
-        self.firmware = button("Reiniciar firmware", self._firmware, "accent", 60)
-        self.klipper = button("Reiniciar Klipper", self._restart, height=60)
+        self.firmware = button(tr("Reiniciar firmware"), self._firmware, "accent", 60)
+        self.klipper = button(tr("Reiniciar Klipper"), self._restart, height=60)
         row.addWidget(self.firmware)
         row.addWidget(self.klipper)
         layout.addLayout(row)
         self.other = button(
-            "Mudar para o KlipperScreen", self._switch, height=52
+            tr("Mudar para o KlipperScreen"), self._switch, height=52
         )
         layout.addWidget(self.other)
         layout.addStretch()
@@ -50,9 +51,9 @@ class ConnectionOverlay(QtWidgets.QFrame):
     def _switch(self) -> None:
         confirm(
             self,
-            "Mudar para o KlipperScreen?",
+            tr("Mudar para o KlipperScreen?"),
             lambda: screenSwitch.switch_to_klipperscreen(self.api, self.printer.add_alert),
-            "Mudar",
+            tr("Mudar"),
         )
 
     def refresh(self) -> None:
@@ -62,10 +63,10 @@ class ConnectionOverlay(QtWidgets.QFrame):
             return
         self.raise_()
         if not printer.link:
-            self.title.setText("A ligar ao Moonraker…")
-            self.text.setText("A aguardar pelo serviço da impressora.")
+            self.title.setText(tr("A ligar ao Moonraker…"))
+            self.text.setText(tr("A aguardar pelo serviço da impressora."))
         else:
-            self.title.setText(machine.KLIPPY_TITLES.get(printer.klippy, printer.klippy))
+            self.title.setText(tr(machine.KLIPPY_TITLES.get(printer.klippy, printer.klippy)))
             self.text.setText(printer.klippy_message or "")
         for widget in (self.firmware, self.klipper, self.other):
             widget.setVisible(printer.link and printer.klippy != "startup")

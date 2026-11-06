@@ -1,6 +1,7 @@
 """File browser for the gcodes folder (the USB stick appears as the USB folder)."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 import posixpath
 
@@ -60,12 +61,12 @@ class FileRow(Clickable):
 
 class FilesPage(SubPage):
     def __init__(self, printer, api, back) -> None:
-        super().__init__("Ficheiros", back)
+        super().__init__(tr("Ficheiros"), back)
         self.printer, self.api = printer, api
         self.path = ""
-        self.up = button("Pasta acima", self._go_up, height=46)
+        self.up = button(tr("Pasta acima"), self._go_up, height=46)
         self.head.addWidget(self.up)
-        self.head.addWidget(button("Atualizar", self.load, height=46))
+        self.head.addWidget(button(tr("Atualizar"), self.load, height=46))
         self.area, self.column = scroll_column(6)
         self.body.addWidget(self.area, 1)
 
@@ -87,7 +88,7 @@ class FilesPage(SubPage):
     def _loaded(self, result, error) -> None:
         clear_layout(self.column)
         if error or not result:
-            self.column.addWidget(label("Não foi possível ler os ficheiros.", "heroSub"))
+            self.column.addWidget(label(tr("Não foi possível ler os ficheiros."), "heroSub"))
             return
         folders = [
             d for d in result.get("dirs", []) if not d.get("dirname", "").startswith(".")
@@ -103,13 +104,13 @@ class FilesPage(SubPage):
         for index, item in enumerate(files):
             self._add_file(item, index < MAX_THUMBS)
         if not folders and not files:
-            self.column.addWidget(label("Pasta vazia.", "heroSub"))
+            self.column.addWidget(label(tr("Pasta vazia."), "heroSub"))
         self.column.addStretch()
 
     def _add_file(self, item: dict, with_thumbnail: bool) -> None:
         name = item["filename"]
         estimate = item.get("estimated_time")
-        detail = f"Estimativa {machine.format_time(estimate)}" if estimate else ""
+        detail = tr("Estimativa {}", machine.format_time(estimate)) if estimate else ""
         row = FileRow("file", name, detail)
         row.clicked.connect(lambda: self._ask_print(name, estimate))
         self.column.addWidget(row)
@@ -126,13 +127,13 @@ class FilesPage(SubPage):
     def _ask_print(self, name: str, estimate) -> None:
         if not self.printer.can_act:
             return
-        detail = f"\nEstimativa: {machine.format_time(estimate)}" if estimate else ""
+        detail = tr("\nEstimativa: {}", machine.format_time(estimate)) if estimate else ""
         full = posixpath.join(self.path, name)
         confirm(
             self,
-            f"Imprimir {name}?{detail}",
+            tr("Imprimir {}?{}", name, detail),
             lambda: self._start(full),
-            "Imprimir",
+            tr("Imprimir"),
         )
 
     def _start(self, full: str) -> None:
@@ -142,4 +143,4 @@ class FilesPage(SubPage):
     def _started(self, _result, error) -> None:
         if error:
             text = error.get("message", str(error)) if isinstance(error, dict) else str(error)
-            self.printer.add_alert(f"Não foi possível iniciar: {text}")
+            self.printer.add_alert(tr("Não foi possível iniciar: {}", text))

@@ -1,6 +1,7 @@
 """Wi-Fi: the network in use, the ones in range, and joining another."""
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib import wifi
@@ -9,22 +10,22 @@ from lib.panels.widgets.dialogs import confirm, keyboard
 from lib.utils.widgets import ListRow, SubPage, button, clear_layout, label, scroll_column
 logger = logging.getLogger(__name__)
 WIFI_OFF_WARNING = (
-    "Desligar o Wi-Fi? Sem cabo de rede, a máquina fica sem Mainsail nem SSH até o "
-    "voltares a ligar neste ecrã."
+    tr("Desligar o Wi-Fi? Sem cabo de rede, a máquina fica sem Mainsail nem SSH até o "
+    "voltares a ligar neste ecrã.")
 )
 WARNING = (
-    "Ligar a {ssid}? A máquina pode mudar de endereço, e quem estiver ligado pelo "
-    "Mainsail ou por SSH perde a ligação."
+    tr("Ligar a {ssid}? A máquina pode mudar de endereço, e quem estiver ligado pelo "
+    "Mainsail ou por SSH perde a ligação.")
 )
 
 
 def describe(network: wifi.Network, saved: bool) -> str:
-    parts = [f"Sinal {network.signal}%"]
-    parts.append("Protegida" if network.secured else "Aberta")
+    parts = [tr("Sinal {}%", network.signal)]
+    parts.append(tr("Protegida") if network.secured else tr("Aberta"))
     if network.in_use:
-        parts.append("Ligada")
+        parts.append(tr("Ligada"))
     elif saved:
-        parts.append("Guardada")
+        parts.append(tr("Guardada"))
     return " · ".join(parts)
 
 
@@ -40,8 +41,8 @@ class WifiPage(SubPage):
         self._loading = False
         self._pending: list[str] = []
         self.radio_on = True
-        self.radio = button("Desligar", self._toggle_radio, height=46)
-        self.scan = button("Procurar", self.refresh, height=46)
+        self.radio = button(tr("Desligar Wi-Fi"), self._toggle_radio, height=46)
+        self.scan = button(tr("Procurar"), self.refresh, height=46)
         self.head.addWidget(self.radio)
         self.head.addWidget(self.scan)
         self.status = label("", "value")
@@ -61,22 +62,22 @@ class WifiPage(SubPage):
         if self._loading:
             return
         self._loading = True
-        self.status.setText("A procurar redes...")
+        self.status.setText(tr("A procurar redes..."))
         self.nmcli.run(wifi.RADIO, self._on_radio)
 
     def _unavailable(self) -> None:
         self._loading = False
-        self.status.setText("Wi-Fi não disponível")
+        self.status.setText(tr("Wi-Fi não disponível"))
 
     def _on_radio(self, _ok: bool, output: str) -> None:
         self.radio_on = output.strip() != "disabled"
-        self.radio.setText("Desligar" if self.radio_on else "Ligar")
+        self.radio.setText(tr("Desligar Wi-Fi") if self.radio_on else tr("Ligar Wi-Fi"))
         self.scan.setVisible(self.radio_on)
         if self.radio_on:
             self.nmcli.run(wifi.DEVICES, self._on_devices)
             return
         self._loading = False
-        self.status.setText("Wi-Fi desligado")
+        self.status.setText(tr("Wi-Fi desligado"))
         clear_layout(self.column)
         self.rows = {}
 
@@ -117,9 +118,9 @@ class WifiPage(SubPage):
         self.networks = wifi.parse_networks(output)
         current = next((n for n in self.networks if n.in_use), None)
         if current:
-            self.status.setText(f"Ligada a {current.ssid} · {self.address}")
+            self.status.setText(tr("Ligada a {} · {}", current.ssid, self.address))
         else:
-            self.status.setText("Sem ligação Wi-Fi")
+            self.status.setText(tr("Sem ligação Wi-Fi"))
         clear_layout(self.column)
         self.rows = {}
         for network in self.networks:
@@ -138,7 +139,7 @@ class WifiPage(SubPage):
         if is_read_only(self.api):
             self.note.setText(READ_ONLY_TEXT)
         elif self.radio_on:
-            confirm(self, WIFI_OFF_WARNING, lambda: self._set_radio("off"), "Desligar")
+            confirm(self, WIFI_OFF_WARNING, lambda: self._set_radio("off"), tr("Desligar"))
         else:
             self._set_radio("on")
 
@@ -153,7 +154,7 @@ class WifiPage(SubPage):
             self.note.setText(READ_ONLY_TEXT)
             return
         self.note.setText("")
-        confirm(self, WARNING.format(ssid=network.ssid), lambda: self._ask(network), "Ligar")
+        confirm(self, WARNING.format(ssid=network.ssid), lambda: self._ask(network), tr("Ligar"))
 
     def _ask(self, network: wifi.Network) -> None:
         profile = self.profiles.get(network.ssid)
@@ -162,7 +163,7 @@ class WifiPage(SubPage):
         elif network.secured:
             keyboard(
                 self,
-                f"Palavra-passe de {network.ssid}",
+                tr("Palavra-passe de {}", network.ssid),
                 lambda password: self._join(network.ssid, wifi.join_args(network.ssid, password)),
                 wifi.MINIMUM_PASSWORD,
             )
@@ -172,7 +173,7 @@ class WifiPage(SubPage):
     def _join(self, ssid: str, args: tuple[str, ...]) -> None:
         logger.info("Joining Wi-Fi network %s", ssid)  # never args: they hold the password
         self._loading = True
-        self.status.setText(f"A ligar a {ssid}...")
+        self.status.setText(tr("A ligar a {}...", ssid))
         self.nmcli.run(args, lambda ok, _output: self._joined(ssid, ok))
 
     def _joined(self, ssid: str, ok: bool) -> None:
@@ -180,7 +181,7 @@ class WifiPage(SubPage):
         self._loading = False
         if not ok:
             self.note.setText(
-                f"Não foi possível ligar a {ssid}. Confirma a palavra-passe e o sinal."
+                tr("Não foi possível ligar a {}. Confirma a palavra-passe e o sinal.", ssid)
             )
         self.refresh()
 

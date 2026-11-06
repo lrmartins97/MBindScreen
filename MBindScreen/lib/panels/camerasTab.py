@@ -6,6 +6,7 @@ view is the nozzle camera again, so it has a menu button but no place in the gri
 """
 from __future__ import annotations
 
+from lib.i18n import tr
 import logging
 
 from lib import machine
@@ -19,6 +20,7 @@ ANALYSIS_INTERVAL_MS = 500  # do not compete with the vision server during a cal
 ALL_CAMERAS = 0  # first page and first menu button; camera n is at n + 1
 GRID_COLUMNS = 2
 MAX_CAMERAS_IN_TWO_COLUMNS = 4
+MENU_WIDTH = 150
 
 
 class CamerasTab(QtWidgets.QWidget):
@@ -29,18 +31,26 @@ class CamerasTab(QtWidgets.QWidget):
         self.choices: list[QtWidgets.QPushButton] = []
         self.tiles: list[CameraView] = []
         self.big_views: list[CameraView] = []
-        root = QtWidgets.QVBoxLayout(self)
-        root.setContentsMargins(12, 8, 12, 12)
-        root.setSpacing(8)
-        self.menu = QtWidgets.QHBoxLayout()
+        root = QtWidgets.QHBoxLayout(self)
+        root.setContentsMargins(14, 12, 14, 12)
+        root.setSpacing(12)
+        side = QtWidgets.QVBoxLayout()
+        side.setSpacing(6)
+        side.addWidget(label(tr("Câmaras"), "pageTitle"))
+        self.menu = QtWidgets.QVBoxLayout()
         self.menu.setSpacing(6)
-        root.addLayout(self.menu)
+        side.addLayout(self.menu)
+        side.addStretch()
+        menu_area = QtWidgets.QWidget()
+        menu_area.setFixedWidth(MENU_WIDTH)
+        menu_area.setLayout(side)
+        root.addWidget(menu_area)
         self.pages = QtWidgets.QStackedWidget()
         root.addWidget(self.pages, 1)
         grid_page = QtWidgets.QWidget()
         column = QtWidgets.QVBoxLayout(grid_page)
         column.setContentsMargins(0, 0, 0, 0)
-        self.message = label("A procurar câmaras...", "dim")
+        self.message = label(tr("A procurar câmaras..."), "dim")
         self.message.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         column.addWidget(self.message)
         self.grid = QtWidgets.QGridLayout()
@@ -63,7 +73,7 @@ class CamerasTab(QtWidgets.QWidget):
     def _on_list(self, result, error) -> None:
         if error:
             logger.warning("No camera list: %s", error)
-            self.message.setText("Não foi possível obter a lista de câmaras")
+            self.message.setText(tr("Não foi possível obter a lista de câmaras"))
             self.message.show()
             return
         cameras = machine.cameras_from_webcams(result.get("webcams", []))
@@ -82,17 +92,17 @@ class CamerasTab(QtWidgets.QWidget):
         self.tiles, self.big_views, self.choices = [], [], []
 
     def _add_choice(self, text: str, page: int) -> None:
-        choice = button(text, lambda: self.choose(page), "choice", 44)
+        choice = button(text, lambda: self.choose(page), "choice", 52)
         self.menu.addWidget(choice)
         self.choices.append(choice)
 
     def _build(self, cameras: list[machine.Camera]) -> None:
         self._clear()
         self.cameras = cameras
-        self.message.setText("Sem câmaras configuradas")
+        self.message.setText(tr("Sem câmaras configuradas"))
         self.message.setVisible(not cameras)
         if cameras:
-            self._add_choice("Todas", ALL_CAMERAS)
+            self._add_choice(tr("Todas"), ALL_CAMERAS)
         in_grid = [camera for camera in cameras if not camera.is_analysis]
         columns = GRID_COLUMNS if len(in_grid) <= MAX_CAMERAS_IN_TWO_COLUMNS else GRID_COLUMNS + 1
         for index, camera in enumerate(cameras):
@@ -101,15 +111,17 @@ class CamerasTab(QtWidgets.QWidget):
             transform = camera_transform(
                 camera.flip_horizontal, camera.flip_vertical, camera.rotation
             )
-            self._add_choice(camera.name, page)
+            self._add_choice(tr(camera.name), page)
             if not camera.is_analysis:
-                tile = CameraView(self.api, url, False, GRID_INTERVAL_MS, transform, camera.name)
+                tile = CameraView(
+                    self.api, url, False, GRID_INTERVAL_MS, transform, tr(camera.name), True
+                )
                 tile.clicked.connect(lambda p=page: self.choose(p))
                 position = len(self.tiles)
                 self.grid.addWidget(tile, position // columns, position % columns)
                 self.tiles.append(tile)
             interval = ANALYSIS_INTERVAL_MS if camera.is_analysis else FRAME_INTERVAL_MS
-            big = CameraView(self.api, url, False, interval, transform)
+            big = CameraView(self.api, url, False, interval, transform, rounded=True)
             self.pages.addWidget(big)
             self.big_views.append(big)
         self.choose(ALL_CAMERAS)
