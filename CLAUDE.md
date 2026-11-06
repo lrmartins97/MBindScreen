@@ -74,6 +74,9 @@ O repositório guarda só o SHA-256 do código; cada máquina pode ter o seu em
 `[screen] developer_code` no `MBindScreen.cfg`. Fecha sozinho quando o ecrã reinicia.
 O código não está escrito em nenhum ficheiro deste repositório.
 
+O arranque continua sempre no KlipperScreen. Para abrir este ecrã sem linha de comandos,
+`scripts/atalho-ecra.sh instalar` acrescenta o botão Mais > MBindScreen ao KlipperScreen.
+
 ## Testar na máquina
 
 ```

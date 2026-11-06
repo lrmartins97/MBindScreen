@@ -162,6 +162,61 @@ def keyboard(
     return scrim
 
 
+CODE_KEYS = "123456789*0#"
+CODE_DOT = "●"
+CODE_WIDTH = 340
+
+
+def code_pad(
+    anchor: QtWidgets.QWidget,
+    title: str,
+    on_ok: typing.Callable[[str], None],
+    minimum: int = 1,
+) -> Scrim:
+    """Phone keypad for a code. Dots on the screen, not the digits."""
+    scrim = Scrim(anchor, CODE_WIDTH)
+    scrim.content.setContentsMargins(16, 10, 16, 10)
+    scrim.content.setSpacing(6)
+    scrim.content.addWidget(label(title, "value"))
+    display = label("", "display")
+    display.setAlignment(CENTER)
+    scrim.content.addWidget(display)
+    typed: list[str] = []
+
+    def show() -> None:
+        display.setText(CODE_DOT * len(typed) or " ")
+        ok.setEnabled(len(typed) >= minimum)
+
+    def press(key: str) -> None:
+        typed.append(key)
+        show()
+
+    def erase() -> None:
+        if typed:
+            typed.pop()
+        show()
+
+    def accept() -> None:
+        scrim.close_box()
+        on_ok("".join(typed))
+
+    grid = QtWidgets.QGridLayout()
+    grid.setSpacing(6)
+    for index, key in enumerate(CODE_KEYS):
+        grid.addWidget(button(key, lambda k=key: press(k), height=52), index // 3, index % 3)
+    scrim.content.addLayout(grid)
+    row = QtWidgets.QHBoxLayout()
+    row.setSpacing(6)
+    row.addWidget(button(tr("Voltar"), scrim.close_box, height=50))
+    row.addWidget(button("⌫", erase, height=50))
+    ok = button("OK", accept, "accent", 50)
+    row.addWidget(ok)
+    scrim.content.addLayout(row)
+    show()
+    scrim.open()
+    return scrim
+
+
 def numpad(
     anchor: QtWidgets.QWidget,
     title: str,

@@ -1,7 +1,7 @@
 """Dialogs must really be on screen: code can press a button nobody can see."""
 import pytest
 from conftest import click_button
-from lib.panels.widgets.dialogs import choose, confirm, keyboard, numpad
+from lib.panels.widgets.dialogs import choose, code_pad, confirm, keyboard, numpad
 from PyQt6 import QtCore, QtWidgets
 
 DIALOGS = {
@@ -9,6 +9,7 @@ DIALOGS = {
     "confirm": lambda window: confirm(window, "Texto " * 40, print),
     "numpad": lambda window: numpad(window, "Temperatura", 30, 90, print),
     "keyboard": lambda window: keyboard(window, "Palavra-passe", print, 8),
+    "code_pad": lambda window: code_pad(window, "Código", print, 4),
 }
 
 
@@ -47,6 +48,23 @@ def test_keyboard_types_capitals_symbols_and_waits_for_the_minimum(window):
     assert ok.isEnabled()
     ok.click()
     assert typed == ["aB!1"]
+
+
+def test_code_pad_hides_the_digits_and_waits_for_the_minimum(window):
+    typed = []
+    scrim = code_pad(window, "Código", typed.append, 4)
+    ok = next(b for b in scrim.findChildren(QtWidgets.QPushButton) if b.text() == "OK")
+    for key in "12*":
+        click_button(scrim, key)
+    assert not ok.isEnabled()
+    click_button(scrim, "#")
+    click_button(scrim, "⌫")
+    click_button(scrim, "0")
+    display = next(w for w in scrim.findChildren(QtWidgets.QLabel)
+                   if w.objectName() == "display")
+    assert display.text() == "●●●●"
+    ok.click()
+    assert typed == ["12*0"]
 
 
 def test_keyboard_can_write_every_character_of_a_password():

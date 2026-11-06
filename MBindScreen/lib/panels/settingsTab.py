@@ -10,7 +10,7 @@ import sys
 
 from lib import screenSwitch
 from lib import i18n
-from lib.panels.widgets.dialogs import choose, confirm, keyboard
+from lib.panels.widgets.dialogs import choose, code_pad, confirm
 from lib.panels.networkPage import HotspotPage, NetworkPage, RemotePage
 from lib.panels.wifiPage import WifiPage
 from lib.utils.theme import ACCENT, DIM, RED
@@ -343,7 +343,7 @@ class SettingsTab(QtWidgets.QStackedWidget):
         if self.developer_on:
             self._set_developer(False)
             return
-        keyboard(self, tr("Código de programador"), self._check_code, MINIMUM_CODE, "OK")
+        code_pad(self, tr("Código de programador"), self._check_code, MINIMUM_CODE)
 
     def _check_code(self, code: str) -> None:
         digest = hashlib.sha256(code.encode("utf-8")).hexdigest()
