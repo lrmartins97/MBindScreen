@@ -46,6 +46,7 @@ class CameraView(QtWidgets.QWidget):
         transform: typing.Optional[QtGui.QTransform] = None,
         caption: str = "",
         rounded: bool = False,
+        fill: bool = False,
     ) -> None:
         super().__init__()
         self.api, self.url, self.show_mark = api, url, show_mark
@@ -53,6 +54,7 @@ class CameraView(QtWidgets.QWidget):
         self.transform = transform or QtGui.QTransform()
         self.caption = caption
         self.rounded = rounded
+        self.fill = fill  # crop the edges to fill the widget: only for small previews
         self.zoom = 1
         self.frame: typing.Optional[QtGui.QPixmap] = None
         self.missed = 0
@@ -130,15 +132,19 @@ class CameraView(QtWidgets.QWidget):
         painter.setPen(QtGui.QColor("#ffffff"))
         painter.drawText(box, QtCore.Qt.AlignmentFlag.AlignCenter, self.caption)
 
+    def _round_corners(self, painter: QtGui.QPainter, area: QtCore.QRect) -> None:
+        painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
+        outline = QtGui.QPainterPath()
+        outline.addRoundedRect(QtCore.QRectF(area), CORNER_RADIUS, CORNER_RADIUS)
+        painter.setClipPath(outline)
+
     def paintEvent(self, _event) -> None:
         painter = QtGui.QPainter(self)
         painter.setRenderHint(QtGui.QPainter.RenderHint.SmoothPixmapTransform)
-        if self.rounded:
-            painter.setRenderHint(QtGui.QPainter.RenderHint.Antialiasing)
-            outline = QtGui.QPainterPath()
-            outline.addRoundedRect(QtCore.QRectF(self.rect()), CORNER_RADIUS, CORNER_RADIUS)
-            painter.setClipPath(outline)
-        painter.fillRect(self.rect(), QtGui.QColor(NO_IMAGE_BG))
+        if not self.rounded or not self.has_image:
+            if self.rounded:
+                self._round_corners(painter, self.rect())
+            painter.fillRect(self.rect(), QtGui.QColor(NO_IMAGE_BG))
         if not self.has_image:
             painter.setPen(QtGui.QColor("#ffffff"))
             painter.drawText(
@@ -149,7 +155,7 @@ class CameraView(QtWidgets.QWidget):
             return
         fit = (
             QtCore.Qt.AspectRatioMode.KeepAspectRatioByExpanding
-            if self.rounded
+            if self.fill
             else QtCore.Qt.AspectRatioMode.KeepAspectRatio
         )
         image = self._visible_part().scaled(
@@ -157,6 +163,8 @@ class CameraView(QtWidgets.QWidget):
         )
         area = QtCore.QRect(QtCore.QPoint(0, 0), image.size())
         area.moveCenter(self.rect().center())
+        if self.rounded:
+            self._round_corners(painter, area.intersected(self.rect()))
         painter.drawPixmap(area, image)
         if self.show_mark:
             self._draw_mark(painter, area)

@@ -25,7 +25,7 @@ ENGLISH_TEXT = {
     "Erro no Klipper": "Klipper error",
     "Klipper desligado": "Klipper disconnected",
     "Interior": "Chamber",
-    "Bicos": "Nozzles",
+    "Alinhar bicos": "Nozzle align",
     "Seringa T0": "Syringe T0",
     "Seringa T1": "Syringe T1",
     "Preparar": "Prepare",
@@ -294,7 +294,7 @@ ENGLISH_TEXT = {
     "O êmbolo empurra {} a {}/s (seringa de {:g} mm)":
         "The plunger pushes {} at {}/s ({:g} mm syringe)",
     "Recuar": "Retract",
-    "Avançar": "Advance",
+    "Avançar": "Extrude",
     "Limpar bico": "Clean nozzle",
     "Limpar bico T{}": "Clean nozzle T{}",
     "Material da seringa T{}": "Material of syringe T{}",

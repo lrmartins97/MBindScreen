@@ -119,8 +119,8 @@ em execução, e `ver`/`usar` com o ecrã ligado não fazem nada.
   daí o `SETTLE_MS` do `Runner`.
 - **Câmaras:** a lista vem do Moonraker, com a inversão definida no Mainsail. A imagem da
   calibração tem de ficar igual à do Mainsail (`calibration_mirror`), senão o jog parece
-  invertido. A vista do kTAMV mostra uma imagem de teste até o servidor receber
-  configuração.
+  invertido. A vista do NozzleSight mostra uma imagem de espera até o servidor
+  receber configuração.
 - **Windows:** os testes escrevem ficheiros para bash com `write_bytes`, porque
   `write_text` põe CRLF. Heredocs grandes no Bash podem falhar: usar a ferramenta Write.
 

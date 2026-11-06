@@ -1,7 +1,7 @@
 """The machine's cameras: a menu to see all of them or each one at full size.
 
 The list comes from Moonraker, as set up in Mainsail. The grid refreshes slowly
-because the Pi also runs the print; only a camera shown alone is fluid. The kTAMV
+because the Pi also runs the print; only a camera shown alone is fluid. The NozzleSight
 view is the nozzle camera again, so it has a menu button but no place in the grid.
 """
 from __future__ import annotations
@@ -114,7 +114,7 @@ class CamerasTab(QtWidgets.QWidget):
             self._add_choice(tr(camera.name), page)
             if not camera.is_analysis:
                 tile = CameraView(
-                    self.api, url, False, GRID_INTERVAL_MS, transform, tr(camera.name), True
+                    self.api, url, False, GRID_INTERVAL_MS, transform, tr(camera.name), True, True
                 )
                 tile.clicked.connect(lambda p=page: self.choose(p))
                 position = len(self.tiles)

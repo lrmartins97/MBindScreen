@@ -60,12 +60,12 @@ PRINTING_MESSAGE = "A imprimir"
 # Names as they are in Mainsail on the machines; any other name is shown as it is.
 CAMERA_NAMES = {
     "chamber": "Interior",
-    "nozzle cam": "Bicos",
+    "nozzle cam": "Alinhar bicos",
     "tool 0": "Seringa T0",
     "tool 1": "Seringa T1",
 }
 NOZZLESIGHT_IMAGE = "/ktamv/"  # the nozzle camera again, with the vision server's analysis
-NOZZLESIGHT_NAME = "kTAMV"
+NOZZLESIGHT_NAME = "NozzleSight"
 
 
 @dataclasses.dataclass(frozen=True)

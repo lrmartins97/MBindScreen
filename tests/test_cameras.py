@@ -1,6 +1,7 @@
 """Cameras tab, with the camera list of a real M-BIND."""
 import dataclasses
 
+import pytest
 from conftest import click_button
 from lib import machine
 from lib.panels.mainWindow import CAMERAS, HOME
@@ -36,7 +37,7 @@ def open_tab(window, api, qtbot):
 def test_cameras_come_with_portuguese_names_and_the_ktamv_view_last():
     cameras = machine.cameras_from_webcams(REAL_LIST)
     assert [c.name for c in cameras] == [
-        "Bicos", "Interior", "Seringa T0", "Seringa T1", "kTAMV",
+        "Alinhar bicos", "Interior", "Seringa T0", "Seringa T1", "NozzleSight",
     ]
     assert cameras[-1].is_analysis and not cameras[0].is_analysis
     assert cameras[0].flip_vertical and cameras[0].rotation == 180
@@ -73,7 +74,7 @@ def test_tapping_a_camera_in_the_grid_opens_it(window, api, qtbot):
 def test_menu_chooses_each_camera_or_all_of_them(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     assert [c.text() for c in tab.choices] == [
-        "Todas", "Bicos", "Interior", "Seringa T0", "Seringa T1", "kTAMV",
+        "Todas", "Alinhar bicos", "Interior", "Seringa T0", "Seringa T1", "NozzleSight",
     ]
     assert is_highlighted(tab, "Todas")
     click_button(tab, "Interior")
@@ -89,14 +90,14 @@ def test_ktamv_view_is_in_the_menu_but_not_in_the_grid(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
     assert len(tab.tiles) == 4
     assert tab.big_views[-1].url.endswith("/ktamv/image")
-    click_button(tab, "kTAMV")
-    assert tab.big_views[-1].isVisible() and is_highlighted(tab, "kTAMV")
+    click_button(tab, "NozzleSight")
+    assert tab.big_views[-1].isVisible() and is_highlighted(tab, "NozzleSight")
     assert tab.big_views[-1].interval_ms > tab.big_views[0].interval_ms
 
 
 def test_coming_back_to_the_tab_starts_on_all_cameras(window, api, qtbot):
     tab = open_tab(window, api, qtbot)
-    click_button(tab, "Bicos")
+    click_button(tab, "Alinhar bicos")
     window.goto(HOME)
     window.goto(CAMERAS)
     assert is_highlighted(tab, "Todas")
@@ -158,3 +159,21 @@ def test_image_is_turned_as_in_mainsail():
     assert pixel_after(camera_transform(False, False, 180)) == [(1, 1)]
     assert pixel_after(camera_transform(False, True, 180)) == [(1, 0)]  # the nozzle camera
     assert pixel_after(camera_transform(False, False, 90)) == [(1, 0)]
+
+
+def test_a_camera_shown_alone_is_never_cropped(window, api, qtbot):
+    tab = open_tab(window, api, qtbot)
+    click_button(tab, "Interior")
+    big = tab.big_views[1]
+    qtbot.waitUntil(lambda: big.has_image, timeout=2000)
+    assert not big.fill and all(tile.fill for tile in tab.tiles)
+    background = big.grab().toImage()
+    middle = background.pixelColor(big.width() // 2, big.height() // 2)
+    assert big.width() / big.height() != pytest.approx(4 / 3)  # the space is not 4:3
+    assert middle.isValid()
+    # The whole frame fits: the side that is left over stays clear of the image
+    if big.width() / big.height() > 4 / 3:
+        spare = background.pixelColor(2, big.height() // 2)
+    else:
+        spare = background.pixelColor(big.width() // 2, 2)
+    assert spare != middle
