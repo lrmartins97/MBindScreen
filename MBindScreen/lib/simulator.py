@@ -14,6 +14,7 @@ from PyQt6 import QtCore, QtGui
 
 logger = logging.getLogger(__name__)
 TICK_MS = 200
+T0_PARK_X, T1_PARK_X = -75.0, 140.0  # invented: the T1 parks past the limits of the T0
 CAMERA_CENTER = (30.0, 100.0)  # invented: real machines have their own
 PIXELS_PER_MM = 40.0
 CAMERA_START_OFFSET = {0: (0.6, -0.4), 1: (-0.9, 0.5)}
@@ -96,6 +97,7 @@ class SimulatedPrinter(QtCore.QObject):
         self.settings.emit({
             "extruder": {"max_temp": 90.0, "filament_diameter": 15.0},
             "extruder1": {"max_temp": 90.0, "filament_diameter": 15.0},
+            "dual_carriage": {"position_min": -20.0, "position_max": 150.0},
         })
         self.klippy.emit("ready", "")
         self.status.emit(self.state)
@@ -207,6 +209,8 @@ class SimulatedPrinter(QtCore.QObject):
         if word == "G28":
             toolhead["homed_axes"] = "xyz"
             toolhead["position"] = [0.0, 0.0, 8.0, 0.0]
+            carriage_1 = self.state["dual_carriage"]["carriage_1"] == "PRIMARY"
+            toolhead["extruder"] = machine.EXTRUDERS[int(carriage_1)]  # _TOOL_STATE_SYNC
             self.gcode_response.emit("// Home concluído")
         elif word == "G1":
             if self.state["print_stats"]["state"] in machine.ACTIVE_PRINT_STATES:
@@ -215,6 +219,10 @@ class SimulatedPrinter(QtCore.QObject):
                 toolhead["position"]["XYZ".index(axis)] += float(value)
         elif word in ("T0", "T1"):
             tool = int(word[1])
+            if toolhead["homed_axes"] != "xyz":
+                return "Must home axis first: 0.000 0.000 6.000 [0.000]"
+            if self.state["dual_carriage"][f"carriage_{tool}"] != "PRIMARY":
+                toolhead["position"][0] = T1_PARK_X if tool else T0_PARK_X
             self.state["dual_carriage"] = {
                 "carriage_0": "PRIMARY" if tool == 0 else "INACTIVE",
                 "carriage_1": "PRIMARY" if tool == 1 else "INACTIVE",
@@ -225,6 +233,7 @@ class SimulatedPrinter(QtCore.QObject):
         elif word.startswith("SERINGA_T"):
             if self.state["print_stats"]["state"] in machine.ACTIVE_PRINT_STATES:
                 return f"{word}: nao disponivel durante uma impressao."
+            toolhead["extruder"] = machine.EXTRUDERS[int(word[-1])]
             self.gcode_response.emit(f"// {word[-2:]}: embolo {params.get('MM')} mm")
         elif word == "SET_MATERIAL":
             variables = self.state["save_variables"]["variables"]

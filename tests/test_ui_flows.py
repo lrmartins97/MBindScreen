@@ -303,7 +303,7 @@ def test_a_touch_on_a_syringe_selects_it_and_only_holding_sets_the_temperature(
     window.goto(SYRINGES)
     panel = window.syringes.panels[1]
     qtbot.mouseClick(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
-    assert api.sent[-1] == "T1"
+    assert api.sent[-1] == "SERINGA_T1"  # no home yet
     assert not any(s.isVisible() for s in window.findChildren(Scrim))
     sent = len(api.sent)
     qtbot.mousePress(panel, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
@@ -317,5 +317,60 @@ def test_holding_a_syringe_switches_to_that_head_while_setting_its_temperature(w
     window.goto(SYRINGES)
     assert window.printer.active_tool == 0
     window.syringes.panels[1].held.emit()
+    assert api.sent[-1] == "SERINGA_T1"  # no home yet
+    assert top_dialog(window).isVisible()
+
+
+def test_jog_of_the_second_head_moves_only_the_step_chosen(window, api):
+    """Parked past the limits of the T0: 1 mm used to become a jump to that limit."""
+    api.gcode("G28")
+    api.gcode("T1")
+    window.goto(CONTROL)
+    window.control.distances.select(1)  # 1 mm
+    click_jog(window.control, "X-")
+    assert api.sent[-1] == "G91\nG1 X-1 F3000\nG90"
+
+
+def test_second_head_stops_at_its_own_limit(window, api):
+    api.gcode("G28")
+    api.gcode("T1")
+    window.goto(CONTROL)
+    window.control.distances.select(3)  # 50 mm, parked 10 mm from the limit
+    click_jog(window.control, "X+")
+    assert api.sent[-1] == "G91\nG1 X10 F3000\nG90"
+
+
+def test_without_home_a_head_is_chosen_without_moving_any_axis(window, api):
+    window.goto(CONTROL)
+    assert not window.printer.homed()
+    window.control.tool_buttons[1].click()
+    assert api.sent[-1] == "SERINGA_T1"
+    assert window.printer.active_tool == 1
+    assert window.printer.tool(1).active and not window.printer.tool(0).active
+    assert not window.printer.alerts
+
+
+def test_with_home_a_head_is_changed_with_the_tool_macro(window, api):
+    api.gcode("G28")
+    window.goto(CONTROL)
+    window.control.tool_buttons[1].click()
     assert api.sent[-1] == "T1"
+
+
+def test_home_puts_the_selection_back_on_the_head_really_active(window, api):
+    window.control.tool_buttons[1].click()
+    api.gcode("G28")
+    assert window.printer.active_tool == 0
+
+
+def test_cards_of_the_main_page_select_the_head(window, api, qtbot):
+    card = window.home.tools[1]
+    qtbot.mouseClick(card, QtCore.Qt.MouseButton.LeftButton, pos=QtCore.QPoint(8, 8))
+    assert api.sent[-1] == "SERINGA_T1"
+    assert window.stack.currentIndex() == HOME  # stays on the page
+
+
+def test_holding_a_card_of_the_main_page_opens_its_temperature(window, api):
+    window.home.tools[1].held.emit()
+    assert api.sent[-1] == "SERINGA_T1"
     assert top_dialog(window).isVisible()

@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from lib import gcodeCommands as gc
 from lib import machine
-from lib.panels.widgets.dialogs import choose, confirm, numpad
+from lib.panels.widgets.dialogs import choose, confirm
+from lib.panels.widgets.toolActions import edit_temperature, select_tool
 from lib.utils.widgets import (
     ChoiceRow,
     HoldArea,
@@ -63,22 +64,10 @@ class SyringePanel(HoldArea):
         layout.addWidget(self.clean)
 
     def _select(self) -> None:
-        printer = self.tab.printer
-        if printer.can_act and self.tool_index != printer.active_tool:
-            self.tab.api.gcode(gc.select_tool(self.tool_index))
+        select_tool(self.tab.printer, self.tab.api, self.tool_index)
 
     def _edit_temperature(self) -> None:
-        printer = self.tab.printer
-        if not printer.ready:
-            return
-        self._select()
-        numpad(
-            self,
-            f"Temperatura T{self.tool_index}",
-            printer.tool(self.tool_index).target,
-            printer.max_temp(self.tool_index),
-            lambda value: self.tab.api.gcode(gc.set_temperature(self.tool_index, value)),
-        )
+        edit_temperature(self, self.tab.printer, self.tab.api, self.tool_index)
 
     def _pick_material(self) -> None:
         options = [("Sem material", 0)]

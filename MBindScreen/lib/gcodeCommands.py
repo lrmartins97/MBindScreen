@@ -25,8 +25,10 @@ ALIGN_NEXT = "CALIBRATE_IDEX_NEXT"
 ALIGN_CANCEL = "CALIBRATE_IDEX_CANCEL"
 
 
-def select_tool(tool: int) -> str:
-    return f"T{tool}"
+def select_tool(tool: int, homed: bool = True) -> str:
+    """T0/T1 park the heads, so they need home. SERINGA_Tn alone only picks the
+    plunger, without moving any axis; the next G28 puts it back on the active head."""
+    return f"T{tool}" if homed else f"SERINGA_T{tool}"
 
 
 def set_temperature(tool: int, target: float) -> str:

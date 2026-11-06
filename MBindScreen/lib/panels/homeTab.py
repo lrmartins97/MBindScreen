@@ -4,16 +4,19 @@ from __future__ import annotations
 import pathlib
 
 from lib import machine
+from lib.panels.widgets.toolActions import edit_temperature, select_tool
 from lib.utils.icons import pixmap
 from lib.utils.theme import ACCENT
-from lib.utils.widgets import Clickable, label, set_card_active, status_chip
+from lib.utils.widgets import Clickable, HoldArea, label, set_card_active, status_chip
 from PyQt6 import QtCore, QtGui, QtWidgets
 
 PHOTO = pathlib.Path(__file__).resolve().parent.parent / "ui" / "resources" / "mbind.png"
 PHOTO_HEIGHT = 270  # 800x480 screen: leaves room for the trial banner
 
 
-class ToolCard(Clickable):
+class ToolCard(HoldArea):
+    """A touch selects this head; holding it also opens its temperature."""
+
     def __init__(self, tool: int) -> None:
         super().__init__("card")
         self.tool_index = tool
@@ -41,11 +44,10 @@ class ToolCard(Clickable):
 
 class HomeTab(QtWidgets.QWidget):
     open_files = QtCore.pyqtSignal(name="open-files")
-    open_syringes = QtCore.pyqtSignal(name="open-syringes")
 
-    def __init__(self, printer) -> None:
+    def __init__(self, printer, api) -> None:
         super().__init__()
-        self.printer = printer
+        self.printer, self.api = printer, api
         root = QtWidgets.QVBoxLayout(self)
         root.setContentsMargins(20, 18, 20, 18)
         root.setSpacing(14)
@@ -95,9 +97,12 @@ class HomeTab(QtWidgets.QWidget):
         files_layout.addStretch()
         row.addWidget(self.files, 4)
         self.tools = {tool: ToolCard(tool) for tool in machine.TOOLS}
-        for card in self.tools.values():
+        for tool, card in self.tools.items():
             card.setFixedHeight(130)
-            card.clicked.connect(self.open_syringes.emit)
+            card.clicked.connect(lambda t=tool: select_tool(printer, api, t))
+            card.held.connect(
+                lambda c=card, t=tool: edit_temperature(c, printer, api, t)
+            )
             row.addWidget(card, 5)
         root.addLayout(row)
         printer.updated.connect(self.refresh)

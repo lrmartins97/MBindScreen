@@ -59,7 +59,7 @@ class MainWindow(QtWidgets.QWidget):
         self._last_touch = time.monotonic()
 
         self.nav = NavBar(TABS)
-        self.home = HomeTab(self.printer)
+        self.home = HomeTab(self.printer, self.api)
         self.control = ControlTab(self.printer, self.api)
         self.syringes = SyringeTab(self.printer, self.api, self.runner)
         self.cameras = CamerasTab(self.api)
@@ -118,7 +118,6 @@ class MainWindow(QtWidgets.QWidget):
         self.nav.selected.connect(self.goto)
         self.nav.emergency.connect(self.emergency_stop)
         self.home.open_files.connect(self.open_files)
-        self.home.open_syringes.connect(lambda: self.goto(SYRINGES))
         self.printing.finished.connect(lambda: self.goto(HOME))
         self.printer.updated.connect(self.refresh)
         self.api.self_updated.connect(self._restart_after_update)

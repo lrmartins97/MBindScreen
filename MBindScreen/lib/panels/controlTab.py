@@ -7,6 +7,7 @@ import typing
 from lib import gcodeCommands as gc
 from lib import machine
 from lib.panels.widgets.dialogs import confirm
+from lib.panels.widgets.toolActions import select_tool
 from lib.utils.icons import pixmap
 from lib.utils.theme import ACCENT
 from lib.utils.widgets import (
@@ -162,8 +163,7 @@ class ControlTab(QtWidgets.QWidget):
         )
 
     def _select(self, tool: int) -> None:
-        if tool != self.printer.active_tool:
-            self.api.gcode(gc.select_tool(tool))
+        select_tool(self.printer, self.api, tool)
 
     def _motors_off(self) -> None:
         self.api.gcode(gc.MOTORS_OFF)
@@ -199,7 +199,7 @@ class ControlTab(QtWidgets.QWidget):
         active = printer.active_tool
         for tool, widget in self.tool_buttons.items():
             set_active(widget, tool == active)
-            widget.setEnabled(idle and homed)
+            widget.setEnabled(idle)  # without home it only picks the plunger
         if homed:
             self.z_label.setText(
                 f"X {printer.position('x'):.1f}\nY {printer.position('y'):.1f}\n"

@@ -8,6 +8,7 @@ from __future__ import annotations
 import collections
 import dataclasses
 import logging
+import math
 import time
 import typing
 
@@ -153,12 +154,14 @@ class Printer(QtCore.QObject):
 
     @property
     def active_tool(self) -> int:
-        """Same rule as the macros: dual_carriage decides, else the extruder."""
+        """Same rule as the macros: dual_carriage decides, else the extruder. Without
+        home a head is chosen with SERINGA_Tn, which only changes the extruder."""
         carriages = self.data.get("dual_carriage", {})
-        if carriages.get("carriage_1") == "PRIMARY":
-            return 1
-        if carriages.get("carriage_0") == "PRIMARY":
-            return 0
+        if self.homed():
+            if carriages.get("carriage_1") == "PRIMARY":
+                return 1
+            if carriages.get("carriage_0") == "PRIMARY":
+                return 0
         return 1 if self.get("toolhead", "extruder") == "extruder1" else 0
 
     def homed(self, axes: str = "xyz") -> bool:
@@ -211,6 +214,13 @@ class Printer(QtCore.QObject):
         return float(values["xyz".index(axis)])
 
     def axis_limits(self, axis: str) -> tuple[float, float]:
+        """Klipper's status keeps the limits of the first carriage, also with T1 active."""
+        if axis == "x" and self.data.get("dual_carriage", {}).get("carriage_1") == "PRIMARY":
+            section = self.settings.get("dual_carriage", {})
+            return (
+                float(section.get("position_min", -math.inf)),
+                float(section.get("position_max", math.inf)),
+            )
         index = "xyz".index(axis)
         low = self.get("toolhead", "axis_minimum", None) or [0, 0, 0, 0]
         high = self.get("toolhead", "axis_maximum", None) or [0, 0, 0, 0]

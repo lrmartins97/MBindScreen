@@ -26,6 +26,7 @@ def test_format_volume(mm3, text):
         (-0.5, 1, 0, 30, 1),  # below the limit, moving away is allowed
         (-0.5, -1, 0, 30, 0),  # below the limit, never further down
         (29, 5, 0, 30, 1),
+        (140, -1, 0, 100, -1),  # outside: one step back, never a jump to the limit
     ],
 )
 def test_clamp_jog(position, delta, low, high, expected):

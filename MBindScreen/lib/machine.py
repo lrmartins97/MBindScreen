@@ -132,12 +132,13 @@ def remaining_time(
 
 
 def clamp_jog(position: float, delta: float, minimum: float, maximum: float) -> float:
-    """Part of ``delta`` that stays inside the limits (0 if there is no room)."""
+    """Part of ``delta`` that stays inside the limits (0 if there is no room).
+    Never more than ``delta``: a jog must not jump back from outside the limits."""
     target = min(max(position + delta, minimum), maximum)
     moved = target - position
     if abs(moved) < 1e-6 or (moved > 0) != (delta > 0):
         return 0.0
-    return round(moved, 3)
+    return round(min(moved, delta) if delta > 0 else max(moved, delta), 3)
 
 
 def prepare_stage(message: str) -> int:
